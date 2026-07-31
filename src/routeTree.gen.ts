@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RecebimentoExternoRouteImport } from './routes/recebimento-externo'
 import { Route as RecebimentoInternoRouteImport } from './routes/recebimento-interno'
+import { Route as RelatorioMensalRouteImport } from './routes/relatorio-mensal'
+import { Route as TreinamentoRouteImport } from './routes/treinamento'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +30,69 @@ const RecebimentoInternoRoute = RecebimentoInternoRouteImport.update({
   path: '/recebimento-interno',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RelatorioMensalRoute = RelatorioMensalRouteImport.update({
+  id: '/relatorio-mensal',
+  path: '/relatorio-mensal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TreinamentoRoute = TreinamentoRouteImport.update({
+  id: '/treinamento',
+  path: '/treinamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/recebimento-externo': typeof RecebimentoExternoRoute
   '/recebimento-interno': typeof RecebimentoInternoRoute
+  '/relatorio-mensal': typeof RelatorioMensalRoute
+  '/treinamento': typeof TreinamentoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/recebimento-externo': typeof RecebimentoExternoRoute
   '/recebimento-interno': typeof RecebimentoInternoRoute
+  '/relatorio-mensal': typeof RelatorioMensalRoute
+  '/treinamento': typeof TreinamentoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/recebimento-externo': typeof RecebimentoExternoRoute
   '/recebimento-interno': typeof RecebimentoInternoRoute
+  '/relatorio-mensal': typeof RelatorioMensalRoute
+  '/treinamento': typeof TreinamentoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/recebimento-externo' | '/recebimento-interno'
+  fullPaths:
+    | '/'
+    | '/recebimento-externo'
+    | '/recebimento-interno'
+    | '/relatorio-mensal'
+    | '/treinamento'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/recebimento-externo' | '/recebimento-interno'
-  id: '__root__' | '/' | '/recebimento-externo' | '/recebimento-interno'
+  to:
+    | '/'
+    | '/recebimento-externo'
+    | '/recebimento-interno'
+    | '/relatorio-mensal'
+    | '/treinamento'
+  id:
+    | '__root__'
+    | '/'
+    | '/recebimento-externo'
+    | '/recebimento-interno'
+    | '/relatorio-mensal'
+    | '/treinamento'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RecebimentoExternoRoute: typeof RecebimentoExternoRoute
   RecebimentoInternoRoute: typeof RecebimentoInternoRoute
+  RelatorioMensalRoute: typeof RelatorioMensalRoute
+  TreinamentoRoute: typeof TreinamentoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +118,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecebimentoInternoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/relatorio-mensal': {
+      id: '/relatorio-mensal'
+      path: '/relatorio-mensal'
+      fullPath: '/relatorio-mensal'
+      preLoaderRoute: typeof RelatorioMensalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/treinamento': {
+      id: '/treinamento'
+      path: '/treinamento'
+      fullPath: '/treinamento'
+      preLoaderRoute: typeof TreinamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +139,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RecebimentoExternoRoute: RecebimentoExternoRoute,
   RecebimentoInternoRoute: RecebimentoInternoRoute,
+  RelatorioMensalRoute: RelatorioMensalRoute,
+  TreinamentoRoute: TreinamentoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
