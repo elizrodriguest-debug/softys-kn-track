@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RecebimentoExternoRouteImport } from './routes/recebimento-externo'
+import { Route as RecebimentoInternoRouteImport } from './routes/recebimento-interno'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecebimentoExternoRoute = RecebimentoExternoRouteImport.update({
+  id: '/recebimento-externo',
+  path: '/recebimento-externo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecebimentoInternoRoute = RecebimentoInternoRouteImport.update({
+  id: '/recebimento-interno',
+  path: '/recebimento-interno',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/recebimento-externo': typeof RecebimentoExternoRoute
+  '/recebimento-interno': typeof RecebimentoInternoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/recebimento-externo': typeof RecebimentoExternoRoute
+  '/recebimento-interno': typeof RecebimentoInternoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/recebimento-externo': typeof RecebimentoExternoRoute
+  '/recebimento-interno': typeof RecebimentoInternoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/recebimento-externo' | '/recebimento-interno'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/recebimento-externo' | '/recebimento-interno'
+  id: '__root__' | '/' | '/recebimento-externo' | '/recebimento-interno'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RecebimentoExternoRoute: typeof RecebimentoExternoRoute
+  RecebimentoInternoRoute: typeof RecebimentoInternoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +68,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recebimento-externo': {
+      id: '/recebimento-externo'
+      path: '/recebimento-externo'
+      fullPath: '/recebimento-externo'
+      preLoaderRoute: typeof RecebimentoExternoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recebimento-interno': {
+      id: '/recebimento-interno'
+      path: '/recebimento-interno'
+      fullPath: '/recebimento-interno'
+      preLoaderRoute: typeof RecebimentoInternoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RecebimentoExternoRoute: RecebimentoExternoRoute,
+  RecebimentoInternoRoute: RecebimentoInternoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
