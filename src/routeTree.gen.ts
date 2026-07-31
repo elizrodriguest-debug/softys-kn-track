@@ -10,14 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as RecebimentoExternoRouteImport } from './routes/recebimento-externo'
 import { Route as RecebimentoInternoRouteImport } from './routes/recebimento-interno'
 import { Route as RelatorioMensalRouteImport } from './routes/relatorio-mensal'
 import { Route as TreinamentoRouteImport } from './routes/treinamento'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecebimentoExternoRoute = RecebimentoExternoRouteImport.update({
@@ -40,59 +47,78 @@ const TreinamentoRoute = TreinamentoRouteImport.update({
   path: '/treinamento',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
   '/recebimento-externo': typeof RecebimentoExternoRoute
   '/recebimento-interno': typeof RecebimentoInternoRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
   '/treinamento': typeof TreinamentoRoute
+  '/usuarios': typeof UsuariosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
   '/recebimento-externo': typeof RecebimentoExternoRoute
   '/recebimento-interno': typeof RecebimentoInternoRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
   '/treinamento': typeof TreinamentoRoute
+  '/usuarios': typeof UsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
   '/recebimento-externo': typeof RecebimentoExternoRoute
   '/recebimento-interno': typeof RecebimentoInternoRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
   '/treinamento': typeof TreinamentoRoute
+  '/usuarios': typeof UsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auditoria'
     | '/recebimento-externo'
     | '/recebimento-interno'
     | '/relatorio-mensal'
     | '/treinamento'
+    | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auditoria'
     | '/recebimento-externo'
     | '/recebimento-interno'
     | '/relatorio-mensal'
     | '/treinamento'
+    | '/usuarios'
   id:
     | '__root__'
     | '/'
+    | '/auditoria'
     | '/recebimento-externo'
     | '/recebimento-interno'
     | '/relatorio-mensal'
     | '/treinamento'
+    | '/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditoriaRoute: typeof AuditoriaRoute
   RecebimentoExternoRoute: typeof RecebimentoExternoRoute
   RecebimentoInternoRoute: typeof RecebimentoInternoRoute
   RelatorioMensalRoute: typeof RelatorioMensalRoute
   TreinamentoRoute: typeof TreinamentoRoute
+  UsuariosRoute: typeof UsuariosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -102,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recebimento-externo': {
@@ -132,15 +165,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreinamentoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditoriaRoute: AuditoriaRoute,
   RecebimentoExternoRoute: RecebimentoExternoRoute,
   RecebimentoInternoRoute: RecebimentoInternoRoute,
   RelatorioMensalRoute: RelatorioMensalRoute,
   TreinamentoRoute: TreinamentoRoute,
+  UsuariosRoute: UsuariosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
