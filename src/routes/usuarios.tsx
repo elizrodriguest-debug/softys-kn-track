@@ -55,12 +55,20 @@ function Usuarios() {
   };
 
   const salvar = () => {
-    if (nome.trim().length < 3) return toast.error("Informe o nome completo do usuário.");
-    if (!/^\d{4}$/.test(pin)) return toast.error("O PIN deve conter exatamente 4 dígitos.");
-    salvarUsuario({ id: edit?.id, nome: nome.trim(), perfil, pin, ativo: edit?.ativo ?? true });
+    if (nome.trim().length < 3) {
+      toast.error("Informe o nome completo do usuário.");
+      return;
+    }
+    if (!/^\d{4}$/.test(pin)) {
+      toast.error("O PIN deve conter exatamente 4 dígitos.");
+      return;
+    }
+    const base = { nome: nome.trim(), perfil, pin, ativo: edit?.ativo ?? true };
+    salvarUsuario(edit ? { ...base, id: edit.id } : base);
     toast.success(edit ? "Usuário atualizado." : "Usuário cadastrado.");
     setAberto(false);
   };
+
 
   return (
     <div className="space-y-4">
