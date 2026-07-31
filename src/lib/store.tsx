@@ -151,6 +151,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const id = sessionStorage.getItem(KEY + ":sessao");
+      if (id) {
+        const u = db.usuarios.find((x) => x.id === id && x.ativo);
+        if (u) setUsuarioAtual(u);
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db !== null]);
+
   const persist = useCallback((next: DB) => {
     setDb(next);
     try {
@@ -185,10 +199,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const u = cur.usuarios.find((x) => x.id === id);
         if (!u || !u.ativo || u.pin !== pin) return false;
         setUsuarioAtual(u);
+        try {
+          sessionStorage.setItem(KEY + ":sessao", u.id);
+        } catch {
+          /* ignore */
+        }
         persist(log(cur, `Login realizado no sistema`, "CRIACAO", u));
         return true;
       },
-      logout: () => setUsuarioAtual(null),
+      logout: () => {
+        setUsuarioAtual(null);
+        try {
+          sessionStorage.removeItem(KEY + ":sessao");
+        } catch {
+          /* ignore */
+        }
+      },
       salvarRegistro: (r) => {
         if (r.id) {
           const registros = cur.registros.map((x) =>
