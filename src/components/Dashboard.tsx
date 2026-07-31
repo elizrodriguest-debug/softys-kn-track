@@ -34,7 +34,7 @@ import { podeEditar, useStore } from "@/lib/store";
 import {
   METAS,
   TURNOS,
-  anomaliasDoRegistro,
+
   isConforme,
   type Registro,
   type Turno,
@@ -414,4 +414,3 @@ export function Dashboard() {
   );
 }
 
-export { anomaliasDoRegistro };
