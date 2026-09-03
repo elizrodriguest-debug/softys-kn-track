@@ -1,78 +1,159 @@
-export type Perfil = "OPERADOR" | "AUDITOR" | "ADMIN";
-export type Turno = "T1" | "T2" | "T3";
-export type TipoReceb = "INTERNO" | "EXTERNO";
-export type Divisao = "TISSUE" | "PERSONAL";
+export type DivisionType = "INTERNO" | "EXTERNO";
 
-export interface Usuario {
+export type ShiftId = "T1" | "T2" | "T3";
+
+export type FactoryType = "Tissue" | "Personal";
+
+export type ExternalOperationType =
+  | "Importação"
+  | "Transferências Filiais"
+  | "Devolução"
+  | "Retrabalho";
+
+export interface DischargeRecord {
   id: string;
-  nome: string;
-  perfil: Perfil;
-  pin: string;
-  ativo: boolean;
+  division: DivisionType;
+  date: string; // Formato YYYY-MM-DD
+  time: string; // Formato HH:mm
+  shiftId: ShiftId;
+  dockNumber?: string;
+  carrierName?: string;
+  licensePlate?: string;
+  driverName?: string;
+  notes?: string;
+  totalVolumes?: number;
+
+  // Campos específicos Softys (Interno)
+  factoryType?: FactoryType;
+  asnNumber?: string;
+  missingAsn?: boolean;
+  missingAsnQuantity?: number;
+  asnDivergenceDetails?: string;
+  brokenPalletsCount?: number;
+  fallenPalletsCount?: number;
+  invalidILPNCount?: number;
+  missingILPNShipmentCount?: number;
+
+  // Campos específicos K+N (Externo)
+  operationType?: ExternalOperationType;
+  invoiceNumber?: string;
+  invoiceQuantity?: number;
+  vehicleQuantity?: number;
+  hasQuantityDivergence?: boolean;
+  divergentQuantityAmount?: number;
+  missingStandardLabel?: boolean;
+  damagedProductsCount?: number;
+  entryDivergenceDetails?: string;
+
+  createdAt: string;
+  createdBy?: string;
 }
 
-export interface Registro {
+export interface LogbookEntry {
   id: string;
-  tipo: TipoReceb;
-  data: string; // yyyy-mm-dd
-  turno: Turno;
-  documento: string; // ASN ou NF
-  divisao: Divisao;
-  placa: string;
-  transportadora: string;
-  volumes: number;
-  palletsQuebrados: number;
-  palletsTombados: number;
-  ilpnAusentes: number;
-  ilpnInvalidas: number;
-  divergenciaCaixas: number;
-  produtosAvariados: number;
-  semAsn: boolean;
-  etiquetaNaoConforme: boolean;
-  observacao: string;
-  criadoPor: string;
-  criadoEm: string;
+  date: string;
+  shiftId: ShiftId;
+  notes: string;
+  updatedAt: string;
+  authorName: string;
 }
 
-export interface DiarioBordo {
-  id: string; // data|turno
-  data: string;
-  turno: Turno;
-  texto: string;
-  autor: string;
-  atualizadoEm: string;
-}
+/* ---------- Constantes operacionais ---------- */
 
-export interface AuditoriaLog {
-  id: string;
-  ts: string;
-  usuario: string;
-  perfil: Perfil;
-  acao: string;
-  tipo: "CRIACAO" | "ALTERACAO" | "EXCLUSAO";
-}
-
-export const TURNOS: { id: Turno; label: string; faixa: string }[] = [
-  { id: "T1", label: "Turno 1", faixa: "06h – 14h" },
-  { id: "T2", label: "Turno 2", faixa: "14h – 22h" },
-  { id: "T3", label: "Turno 3", faixa: "22h – 06h" },
+export const SHIFTS: { id: ShiftId; label: string; range: string; start: string; end: string }[] = [
+  { id: "T1", label: "Turno 1", range: "06:00 às 14:20", start: "06:00", end: "14:20" },
+  { id: "T2", label: "Turno 2", range: "14:20 às 22:35", start: "14:20", end: "22:35" },
+  { id: "T3", label: "Turno 3", range: "22:35 às 06:00", start: "22:35", end: "06:00" },
 ];
 
-export const METAS: Record<TipoReceb, number> = { INTERNO: 25, EXTERNO: 5 };
+export const FACTORIES: FactoryType[] = ["Tissue", "Personal"];
 
-export function anomaliasDoRegistro(r: Registro): number {
-  return (
-    r.palletsQuebrados +
-    r.palletsTombados +
-    r.ilpnAusentes +
-    r.ilpnInvalidas +
-    r.divergenciaCaixas +
-    r.produtosAvariados +
-    (r.semAsn ? 1 : 0) +
-    (r.etiquetaNaoConforme ? 1 : 0)
-  );
+export const EXTERNAL_OPERATIONS: ExternalOperationType[] = [
+  "Importação",
+  "Transferências Filiais",
+  "Devolução",
+  "Retrabalho",
+];
+
+/** Metas padrão por turno (25 internos = 75/dia; 5 externos = 15/dia). */
+export const DEFAULT_GOALS: Record<DivisionType, number> = { INTERNO: 25, EXTERNO: 5 };
+
+/** Volumes padrão por descarga interna. */
+export const DEFAULT_PALLETS_PER_VEHICLE = 28;
+
+export const DIVISION_LABEL: Record<DivisionType, string> = {
+  INTERNO: "Recebimento Interno",
+  EXTERNO: "Recebimento Externo",
+};
+
+export const DIVISION_OWNER: Record<DivisionType, string> = {
+  INTERNO: "Softys",
+  EXTERNO: "Kuehne+Nagel",
+};
+
+export const FACTORY_COLORS: Record<FactoryType, string> = {
+  Tissue: "#10b981",
+  Personal: "#6366f1",
+};
+
+/** Identifica o turno a partir do horário HH:mm informado. */
+export function shiftFromTime(time: string): ShiftId {
+  const [h = 0, m = 0] = time.split(":").map(Number);
+  const mins = (h ?? 0) * 60 + (m ?? 0);
+  if (mins >= 6 * 60 && mins < 14 * 60 + 20) return "T1";
+  if (mins >= 14 * 60 + 20 && mins < 22 * 60 + 35) return "T2";
+  return "T3";
 }
 
-export function isConforme(r: Registro): boolean {
-  return anomaliasDoRegistro(r) === 0;
+export interface NonConformity {
+  label: string;
+  quantity: number;
+  detail?: string;
+}
+
+/** Lista as não-conformidades de um registro, respeitando as regras de cada divisão. */
+export function nonConformities(r: DischargeRecord): NonConformity[] {
+  const out: NonConformity[] = [];
+  if (r.division === "INTERNO") {
+    if (r.brokenPalletsCount) out.push({ label: "Pallets Quebrados", quantity: r.brokenPalletsCount });
+    if (r.fallenPalletsCount) out.push({ label: "Pallets Tombados", quantity: r.fallenPalletsCount });
+    if (r.missingAsn)
+      out.push({
+        label: "Carga sem ASN",
+        quantity: r.missingAsnQuantity ?? 0,
+        detail: `${r.missingAsnQuantity ?? 0} volumes sem ASN`,
+      });
+    if (r.invalidILPNCount) out.push({ label: "iLPN Inválida", quantity: r.invalidILPNCount });
+    if (r.missingILPNShipmentCount)
+      out.push({ label: "iLPN Ausente", quantity: r.missingILPNShipmentCount });
+    if (r.asnDivergenceDetails?.trim())
+      out.push({ label: "Divergência de ASN", quantity: 1, detail: r.asnDivergenceDetails });
+  } else {
+    if (r.hasQuantityDivergence)
+      out.push({
+        label: "Divergência de Quantidade",
+        quantity: r.divergentQuantityAmount ?? 0,
+        detail: `NF ${r.invoiceQuantity ?? 0} x Físico ${r.vehicleQuantity ?? 0}`,
+      });
+    if (r.missingStandardLabel) out.push({ label: "Falta de Etiqueta Padrão", quantity: 1 });
+    if (r.damagedProductsCount)
+      out.push({ label: "Produtos Avariados", quantity: r.damagedProductsCount });
+    if (r.fallenPalletsCount) out.push({ label: "Pallets Tombados", quantity: r.fallenPalletsCount });
+    if (r.entryDivergenceDetails?.trim())
+      out.push({ label: "Divergências de Entrada", quantity: 1, detail: r.entryDivergenceDetails });
+  }
+  return out;
+}
+
+export function isConforme(r: DischargeRecord): boolean {
+  return nonConformities(r).length === 0;
+}
+
+export function recordVolumes(r: DischargeRecord): number {
+  return r.totalVolumes ?? (r.division === "INTERNO" ? DEFAULT_PALLETS_PER_VEHICLE : 0);
+}
+
+export function formatDateBR(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
 }
