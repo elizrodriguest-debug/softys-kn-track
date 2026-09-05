@@ -1,416 +1,425 @@
 import { useMemo, useState } from "react";
+import { motion } from "motion/react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
+  CellProps,
+  ComposedChart,
+  LabelList,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  AlertTriangle,
-  BookMarked,
-  Boxes,
-  CheckCircle2,
-  FileWarning,
-  PackageX,
-  Save,
-  Tags,
-  Truck,
-} from "lucide-react";
-import { toast } from "sonner";
+import { BookOpen, History, Mail, Save, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { podeEditar, useStore } from "@/lib/store";
+import { Badge } from "@/components/ui/badge";
 import {
-  METAS,
-  TURNOS,
-
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useStore } from "@/lib/store";
+import {
+  DIVISION_LABEL,
+  DIVISION_OWNER,
+  EXTERNAL_OPERATIONS,
+  FACTORIES,
+  FACTORY_COLORS,
+  SHIFTS,
+  formatDateBR,
   isConforme,
-  type Registro,
-  type Turno,
+  recordVolumes,
+  type DischargeRecord,
+  type DivisionType,
+  type ShiftId,
 } from "@/lib/types";
+import { byHourSeries, byShiftSeries, computeKpis, paretoSeries } from "@/lib/analytics";
+import { ShiftClosureModal } from "@/components/ShiftClosureModal";
 import { cn } from "@/lib/utils";
 
-const AZUL = "#003369";
-const VERDE = "#08C792";
-const AMBAR = "#F59E0B";
-const VERMELHO = "#DC2626";
+type DateFilter = "HOJE" | "ONTEM" | "7D" | "TUDO" | "DIA";
+type ShiftFilter = ShiftId | "GERAL";
 
-const hojeISO = () => new Date().toISOString().slice(0, 10);
-const fmtData = (d: string) => d.split("-").reverse().slice(0, 2).join("/");
+const OPERATION_COLORS: Record<string, string> = {
+  "Importação": "#003369",
+  "Transferências Filiais": "#08C792",
+  "Devolução": "#f59e0b",
+  "Retrabalho": "#6366f1",
+};
 
-function Kpi({
-  titulo,
-  valor,
-  meta,
-  icone: Icone,
-}: {
-  titulo: string;
-  valor: number;
-  meta: number;
-  icone: typeof Truck;
-}) {
-  const pct = meta > 0 ? Math.min(100, Math.round((valor / meta) * 100)) : 0;
-  return (
-    <div className="card-surface p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-muted-foreground">{titulo}</p>
-          <p className="mt-1 font-display text-3xl font-bold tabular-nums">
-            {valor}
-            <span className="ml-1 text-base font-medium text-muted-foreground">/ {meta}</span>
-          </p>
-        </div>
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-brand">
-          <Icone className="h-5 w-5" />
-        </div>
-      </div>
-      <Progress value={pct} className="mt-4 h-2" />
-      <p className="mt-2 text-xs text-muted-foreground">
-        {pct}% da meta do período{" "}
-        {pct >= 100 && <span className="font-semibold text-success">· meta atingida</span>}
-      </p>
-    </div>
-  );
-}
-
-function AnomaliaCard({
-  titulo,
-  valor,
-  icone: Icone,
-  tom,
-}: {
-  titulo: string;
-  valor: number;
-  icone: typeof Truck;
-  tom: "warn" | "crit" | "ok";
-}) {
-  return (
-    <div className="card-surface flex items-center gap-3 p-4">
-      <div
-        className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
-          tom === "crit" && "bg-danger/12 text-danger",
-          tom === "warn" && "bg-warning/20 text-warning-foreground",
-          tom === "ok" && "bg-success/15 text-success-foreground",
-        )}
-      >
-        <Icone className="h-5 w-5" />
-      </div>
-      <div className="min-w-0">
-        <p className="font-display text-2xl font-bold leading-none tabular-nums">{valor}</p>
-        <p className="mt-1 truncate text-xs text-muted-foreground">{titulo}</p>
-      </div>
-    </div>
-  );
-}
-
-function ChartCard({
-  titulo,
-  descricao,
-  children,
-}: {
-  titulo: string;
-  descricao?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="card-surface p-5">
-      <h3 className="font-display text-base font-semibold">{titulo}</h3>
-      {descricao && <p className="mb-2 text-xs text-muted-foreground">{descricao}</p>}
-      <div className="mt-3 h-64">{children}</div>
-    </div>
-  );
+function isoToday(offset = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - offset);
+  return d.toISOString().slice(0, 10);
 }
 
 export function Dashboard() {
-  const { registros, diarios, salvarDiario, usuarioAtual } = useStore();
-  const [data, setData] = useState(hojeISO());
-  const [turno, setTurno] = useState<Turno | "TODOS">("TODOS");
-  const [texto, setTexto] = useState("");
-  const [carregouDiario, setCarregouDiario] = useState<string | null>(null);
+  const { records, session, getLogbook, saveLogbook, settings, logbook } = useStore();
+  const [division, setDivision] = useState<DivisionType>("INTERNO");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("HOJE");
+  const [specificDate, setSpecificDate] = useState(isoToday());
+  const [shift, setShift] = useState<ShiftFilter>("GERAL");
+  const [closureOpen, setClosureOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
-  const doDia = useMemo(() => registros.filter((r) => r.data === data), [registros, data]);
-  const filtrados = useMemo(
-    () => (turno === "TODOS" ? doDia : doDia.filter((r) => r.turno === turno)),
-    [doDia, turno],
-  );
-
-  const soma = (rs: Registro[], k: keyof Registro) =>
-    rs.reduce((a, r) => a + (Number(r[k]) || 0), 0);
-
-  const internos = filtrados.filter((r) => r.tipo === "INTERNO");
-  const externos = filtrados.filter((r) => r.tipo === "EXTERNO");
-  const fator = turno === "TODOS" ? 3 : 1;
-
-  const conformes = filtrados.filter(isConforme).length;
-  const taxa = filtrados.length ? Math.round((conformes / filtrados.length) * 100) : 100;
-
-  const porTurno = TURNOS.map((t) => ({
-    turno: t.label,
-    Interno: doDia.filter((r) => r.turno === t.id && r.tipo === "INTERNO").length,
-    Externo: doDia.filter((r) => r.turno === t.id && r.tipo === "EXTERNO").length,
-    Ocorrências: doDia.filter((r) => r.turno === t.id && !isConforme(r)).length,
-  }));
-
-  const tendencia = useMemo(() => {
-    const dias: { dia: string; descargas: number; conformidade: number }[] = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(data);
-      d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
-      const rs = registros.filter((r) => r.data === iso);
-      dias.push({
-        dia: fmtData(iso),
-        descargas: rs.length,
-        conformidade: rs.length ? Math.round((rs.filter(isConforme).length / rs.length) * 100) : 0,
-      });
+  const { filtered, days, refDate } = useMemo(() => {
+    const today = isoToday();
+    let base = records.filter((r) => r.division === division);
+    let dias = 1;
+    let ref = today;
+    if (dateFilter === "HOJE") base = base.filter((r) => r.date === today);
+    else if (dateFilter === "ONTEM") {
+      ref = isoToday(1);
+      base = base.filter((r) => r.date === ref);
+    } else if (dateFilter === "7D") {
+      const min = isoToday(6);
+      base = base.filter((r) => r.date >= min && r.date <= today);
+      dias = 7;
+    } else if (dateFilter === "DIA") {
+      ref = specificDate;
+      base = base.filter((r) => r.date === specificDate);
+    } else {
+      dias = new Set(base.map((r) => r.date)).size || 1;
     }
-    return dias;
-  }, [registros, data]);
+    if (shift !== "GERAL") base = base.filter((r) => r.shiftId === shift);
+    return { filtered: base, days: dias, refDate: ref };
+  }, [records, division, dateFilter, specificDate, shift]);
 
-  const distribuicao = [
-    { name: "Pallets quebrados", value: soma(filtrados, "palletsQuebrados"), cor: VERMELHO },
-    { name: "Pallets tombados", value: soma(filtrados, "palletsTombados"), cor: AMBAR },
-    { name: "iLPN ausente/inválida", value: soma(filtrados, "ilpnAusentes") + soma(filtrados, "ilpnInvalidas"), cor: AZUL },
-    { name: "Divergência de caixas", value: soma(filtrados, "divergenciaCaixas"), cor: "#7C3AED" },
-    { name: "Produtos avariados", value: soma(filtrados, "produtosAvariados"), cor: "#0EA5E9" },
-  ].filter((d) => d.value > 0);
+  const goalPerShift = settings.goals[division];
+  const goal = goalPerShift * (shift === "GERAL" ? 3 : 1) * days;
+  const kpis = useMemo(() => computeKpis(filtered, goal), [filtered, goal]);
 
-  const diarioId = `${data}|${turno === "TODOS" ? "T1" : turno}`;
-  const diarioAtual = diarios.find((d) => d.id === diarioId);
-  if (carregouDiario !== diarioId) {
-    setCarregouDiario(diarioId);
-    setTexto(diarioAtual?.texto ?? "");
-  }
+  const shiftSeries = useMemo(() => byShiftSeries(filtered, division), [filtered, division]);
+  const hourSeries = useMemo(() => byHourSeries(filtered), [filtered]);
+  const pareto = useMemo(() => paretoSeries(filtered), [filtered]);
+
+  const seriesKeys = division === "INTERNO" ? FACTORIES : EXTERNAL_OPERATIONS;
+  const seriesColor = (k: string) =>
+    division === "INTERNO" ? FACTORY_COLORS[k as "Tissue" | "Personal"] : (OPERATION_COLORS[k] ?? "#003369");
+
+  const closureShift: ShiftId = shift === "GERAL" ? session.shiftId : shift;
+  const closureDate = dateFilter === "TUDO" || dateFilter === "7D" ? isoToday() : refDate;
+  const logEntry = getLogbook(closureDate, closureShift);
+  const [notes, setNotes] = useState<string | null>(null);
+  const notesValue = notes ?? logEntry?.notes ?? "";
+
+  const goalOk = kpis.attainment >= 100;
 
   return (
     <div className="space-y-5">
-      <div className="card-surface flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-        <div className="flex min-w-0 items-center gap-2">
-          <label className="whitespace-nowrap text-sm font-medium text-muted-foreground">
-            Data
-          </label>
-          <Input
-            type="date"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-            className="w-[170px]"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2 sm:ml-auto">
-          {(["TODOS", "T1", "T2", "T3"] as const).map((t) => (
+      {/* Filtros */}
+      <div className="card-surface flex flex-col gap-3 p-4 no-print xl:flex-row xl:items-center">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {([
+            ["HOJE", "Hoje"],
+            ["ONTEM", "Ontem"],
+            ["7D", "Últimos 7 Dias"],
+            ["TUDO", "Ver Tudo"],
+          ] as const).map(([id, label]) => (
             <Button
-              key={t}
+              key={id}
               size="sm"
-              variant={turno === t ? "default" : "outline"}
-              onClick={() => setTurno(t)}
+              variant={dateFilter === id ? "default" : "outline"}
+              onClick={() => setDateFilter(id)}
             >
-              {t === "TODOS" ? "Todos os turnos" : `${t} · ${TURNOS.find((x) => x.id === t)!.faixa}`}
+              {label}
             </Button>
           ))}
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi
-          titulo="Descargas — Interno"
-          valor={internos.length}
-          meta={METAS.INTERNO * fator}
-          icone={Truck}
-        />
-        <Kpi
-          titulo="Descargas — Externo"
-          valor={externos.length}
-          meta={METAS.EXTERNO * fator}
-          icone={Boxes}
-        />
-        <div className="card-surface p-5">
-          <p className="text-sm font-medium text-muted-foreground">Taxa de conformidade</p>
-          <p className="mt-1 font-display text-3xl font-bold tabular-nums text-success-foreground">
-            {taxa}%
-          </p>
-          <Progress value={taxa} className="mt-4 h-2" />
-          <p className="mt-2 text-xs text-muted-foreground">
-            {conformes} de {filtrados.length} descargas sem anomalias
-          </p>
-        </div>
-        <div className="card-surface p-5">
-          <p className="text-sm font-medium text-muted-foreground">Volumes recebidos</p>
-          <p className="mt-1 font-display text-3xl font-bold tabular-nums">
-            {soma(filtrados, "volumes").toLocaleString("pt-BR")}
-          </p>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Total de pallets/volumes conferidos no período selecionado
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <AnomaliaCard
-          titulo="Veículos sem ASN"
-          valor={filtrados.filter((r) => r.semAsn).length}
-          icone={FileWarning}
-          tom="crit"
-        />
-        <AnomaliaCard
-          titulo="iLPNs ausentes"
-          valor={soma(filtrados, "ilpnAusentes")}
-          icone={Tags}
-          tom="warn"
-        />
-        <AnomaliaCard
-          titulo="iLPNs inválidas"
-          valor={soma(filtrados, "ilpnInvalidas")}
-          icone={Tags}
-          tom="warn"
-        />
-        <AnomaliaCard
-          titulo="Pallets quebrados"
-          valor={soma(filtrados, "palletsQuebrados")}
-          icone={PackageX}
-          tom="crit"
-        />
-        <AnomaliaCard
-          titulo="Pallets tombados"
-          valor={soma(filtrados, "palletsTombados")}
-          icone={AlertTriangle}
-          tom="warn"
-        />
-        <AnomaliaCard
-          titulo="Divergências / avarias"
-          valor={soma(filtrados, "divergenciaCaixas") + soma(filtrados, "produtosAvariados")}
-          icone={CheckCircle2}
-          tom="crit"
-        />
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <ChartCard titulo="Desempenho por turno" descricao="Descargas realizadas no dia selecionado">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={porTurno}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="turno" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="Interno" fill={AZUL} radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Externo" fill={VERDE} radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Ocorrências" fill={AMBAR} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          titulo="Tendência de 14 dias"
-          descricao="Volume de descargas e evolução da conformidade (%)"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={tendencia}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
-              <YAxis yAxisId="l" tick={{ fontSize: 11 }} />
-              <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend />
-              <Line
-                yAxisId="l"
-                type="monotone"
-                dataKey="descargas"
-                name="Descargas"
-                stroke={AZUL}
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                yAxisId="r"
-                type="monotone"
-                dataKey="conformidade"
-                name="Conformidade %"
-                stroke={VERDE}
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard titulo="Distribuição das ocorrências" descricao="Período selecionado">
-          {distribuicao.length ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={distribuicao}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={95}
-                  paddingAngle={2}
-                >
-                  {distribuicao.map((d) => (
-                    <Cell key={d.name} fill={d.cor} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="grid h-full place-items-center text-sm text-muted-foreground">
-              Nenhuma ocorrência registrada no período.
-            </div>
-          )}
-        </ChartCard>
-
-        <div className="card-surface p-5">
-          <div className="flex items-center gap-2">
-            <BookMarked className="h-5 w-5 text-brand" />
-            <h3 className="font-display text-base font-semibold">Diário de Bordo do Turno</h3>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Justificativas operacionais do turno {turno === "TODOS" ? "T1" : turno} em{" "}
-            {data.split("-").reverse().join("/")} — ex.: queda do WMS, falta de empilhadeiras,
-            atraso fiscal.
-          </p>
-          <Textarea
-            className="mt-3"
-            rows={7}
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            disabled={!podeEditar(usuarioAtual?.perfil)}
-            placeholder="Registre aqui os gargalos e justificativas do turno..."
+          <Input
+            type="date"
+            value={specificDate}
+            onChange={(e) => {
+              setSpecificDate(e.target.value);
+              setDateFilter("DIA");
+            }}
+            className={cn("w-[165px]", dateFilter === "DIA" && "border-primary ring-1 ring-primary")}
           />
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              {diarioAtual
-                ? `Último registro por ${diarioAtual.autor}`
-                : "Nenhum registro para este turno."}
-            </p>
-            {podeEditar(usuarioAtual?.perfil) && (
-              <Button
-                size="sm"
-                onClick={() => {
-                  salvarDiario(data, turno === "TODOS" ? "T1" : turno, texto);
-                  toast.success("Diário de bordo salvo.");
-                }}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 xl:ml-auto">
+          <Select value={shift} onValueChange={(v) => setShift(v as ShiftFilter)}>
+            <SelectTrigger className="w-[190px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="GERAL">Turno Geral</SelectItem>
+              {SHIFTS.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} ({s.range})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex rounded-lg border border-border p-0.5">
+            {(["INTERNO", "EXTERNO"] as DivisionType[]).map((d) => (
+              <button
+                key={d}
+                onClick={() => setDivision(d)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  division === d
+                    ? "bg-brand text-brand-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
-                <Save className="h-4 w-4" /> Salvar diário
-              </Button>
-            )}
+                {DIVISION_LABEL[d]}
+              </button>
+            ))}
+          </div>
+
+          <Button onClick={() => setClosureOpen(true)}>
+            <Mail className="h-4 w-4" /> Fechamento de Turno (E-mail)
+          </Button>
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          index={0}
+          title="Veículos Descarregados vs. Meta"
+          value={`${kpis.vehicles} / ${goal}`}
+          hint={`${DIVISION_OWNER[division]} · ${shift === "GERAL" ? "todos os turnos" : shift}`}
+        />
+        <KpiCard
+          index={1}
+          title="Volumes / Pallets Recebidos"
+          value={kpis.volumes.toLocaleString("pt-BR")}
+          hint={`${filtered.length} descargas no filtro`}
+        />
+        <KpiCard
+          index={2}
+          title="Taxa de Conformidade"
+          value={`${kpis.conformityRate}%`}
+          hint={`${kpis.nonConformes} com não-conformidade`}
+          tone={kpis.nonConformes === 0 ? "success" : "warning"}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="card-surface p-5"
+        >
+          <p className="text-sm font-medium text-muted-foreground">
+            Meta do Turno {shift === "GERAL" ? "(Geral)" : shift}
+          </p>
+          <div className="mt-1 flex items-baseline gap-2">
+            <p className="font-display text-3xl font-bold tabular-nums">{kpis.attainment}%</p>
+            <Badge className={goalOk ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground"}>
+              {goalOk ? "Meta Atingida" : "Abaixo da Meta"}
+            </Badge>
+          </div>
+          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-secondary">
+            <motion.div
+              className={cn("h-full rounded-full", goalOk ? "bg-success" : "bg-warning")}
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(100, kpis.attainment)}%` }}
+              transition={{ duration: 0.6 }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Meta de {goalPerShift} veículos por turno · {goal} no período filtrado
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Gráficos */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <div className="card-surface p-5">
+          <h3 className="font-display text-base font-semibold">
+            Veículos Descarregados por Turno e {division === "INTERNO" ? "Fábrica" : "Operação"}
+          </h3>
+          <p className="text-xs text-muted-foreground">Barras empilhadas com total por turno</p>
+          <div className="mt-4 h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={shiftSeries} margin={{ top: 24 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="turno" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                {seriesKeys.map((k, i) => (
+                  <Bar key={k} dataKey={k} stackId="a" fill={seriesColor(k)} radius={i === seriesKeys.length - 1 ? [6, 6, 0, 0] : undefined}>
+                    <LabelList dataKey={k} position="center" fill="#fff" fontSize={11} formatter={(v: number) => (v > 0 ? v : "")} />
+                    {i === seriesKeys.length - 1 && (
+                      <LabelList dataKey="total" position="top" fontSize={12} fontWeight={700} />
+                    )}
+                  </Bar>
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="card-surface p-5">
+          <h3 className="font-display text-base font-semibold">Produtividade por Hora</h3>
+          <p className="text-xs text-muted-foreground">Distribuição das descargas por faixa de horário</p>
+          <div className="mt-4 h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={hourSeries}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="hora" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={50} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip />
+                <Line type="monotone" dataKey="Descargas" stroke="#003369" strokeWidth={2.5} dot={{ r: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
+
+      <div className="card-surface p-5">
+        <h3 className="font-display text-base font-semibold">Pareto de Ocorrências</h3>
+        <p className="text-xs text-muted-foreground">
+          Principais motivos de anomalia em ordem decrescente
+        </p>
+        <div className="mt-4 h-80">
+          {pareto.length === 0 ? (
+            <div className="grid h-full place-items-center text-sm text-muted-foreground">
+              Nenhuma ocorrência registrada no filtro selecionado.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={pareto} margin={{ bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="motivo" tick={{ fontSize: 10 }} interval={0} angle={-18} textAnchor="end" height={60} />
+                <YAxis yAxisId="l" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
+                <Tooltip />
+                <Legend />
+                <Bar yAxisId="l" dataKey="Ocorrências" fill="#f59e0b" radius={[6, 6, 0, 0]}>
+                  <LabelList dataKey="Ocorrências" position="top" fontSize={11} />
+                </Bar>
+                <Line yAxisId="r" type="monotone" dataKey="Acumulado" stroke="#003369" strokeWidth={2} dot={{ r: 3 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Diário de Bordo */}
+      <div className="card-surface p-5 no-print">
+        <div className="flex flex-wrap items-center gap-2">
+          <BookOpen className="h-4 w-4 text-brand" />
+          <h3 className="font-display text-base font-semibold">Diário de Bordo</h3>
+          <span className="text-xs text-muted-foreground">
+            {formatDateBR(closureDate)} · {closureShift} · {session.operatorName}
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Justificativas operacionais do turno ativo (atraso de carretas, queda de sistema WMS,
+          docas indisponíveis).
+        </p>
+        <Textarea
+          className="mt-3 min-h-28"
+          value={notesValue}
+          placeholder="Descreva as ocorrências e justificativas do turno..."
+          onChange={(e) => setNotes(e.target.value)}
+        />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            onClick={() => {
+              saveLogbook(closureDate, closureShift, notesValue);
+              setNotes(null);
+            }}
+          >
+            <Save className="h-4 w-4" /> Salvar apontamento
+          </Button>
+          <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+            <History className="h-4 w-4" /> Histórico de apontamentos
+          </Button>
+          <Button variant="outline" onClick={() => setClosureOpen(true)}>
+            <Mail className="h-4 w-4" /> Enviar fechamento por e-mail
+          </Button>
+        </div>
+      </div>
+
+      <ShiftClosureModal
+        open={closureOpen}
+        onOpenChange={setClosureOpen}
+        division={division}
+        shiftId={closureShift}
+        date={closureDate}
+        records={filtered}
+        goal={goal}
+      />
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Histórico de apontamentos</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {logbook.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhum apontamento registrado.</p>
+            )}
+            {[...logbook]
+              .sort((a, b) => (a.id < b.id ? 1 : -1))
+              .map((l) => (
+                <div key={l.id} className="rounded-lg border border-border p-3">
+                  <p className="text-xs font-semibold text-brand">
+                    {formatDateBR(l.date)} · {l.shiftId} · {l.authorName}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{l.notes}</p>
+                </div>
+              ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
+function KpiCard({
+  title,
+  value,
+  hint,
+  tone,
+  index,
+}: {
+  title: string;
+  value: string;
+  hint?: string;
+  tone?: "success" | "warning";
+  index: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="card-surface p-5"
+    >
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <p
+        className={cn(
+          "mt-1 font-display text-3xl font-bold tabular-nums",
+          tone === "success" && "text-success",
+          tone === "warning" && "text-warning",
+        )}
+      >
+        {value}
+      </p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </motion.div>
+  );
+}
+
+export type { DischargeRecord, CellProps };
+export { isConforme, recordVolumes, Truck };
