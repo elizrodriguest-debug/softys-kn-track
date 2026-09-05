@@ -4,7 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  CellProps,
   ComposedChart,
   LabelList,
   Legend,
@@ -15,7 +14,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { BookOpen, History, Mail, Save, Truck } from "lucide-react";
+import { BookOpen, History, Mail, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,8 +41,6 @@ import {
   FACTORY_COLORS,
   SHIFTS,
   formatDateBR,
-  isConforme,
-  recordVolumes,
   type DischargeRecord,
   type DivisionType,
   type ShiftId,
@@ -420,6 +417,3 @@ function KpiCard({
     </motion.div>
   );
 }
-
-export type { DischargeRecord, CellProps };
-export { isConforme, recordVolumes, Truck };
