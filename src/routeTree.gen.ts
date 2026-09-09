@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as RelatorioMensalRouteImport } from './routes/relatorio-mensal'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoricoRoute = HistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegistrarRoute = RegistrarRouteImport.update({
@@ -38,12 +44,14 @@ const RelatorioMensalRoute = RelatorioMensalRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/historico': typeof HistoricoRoute
   '/registrar': typeof RegistrarRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/historico': typeof HistoricoRoute
   '/registrar': typeof RegistrarRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
 }
@@ -51,20 +59,29 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/historico': typeof HistoricoRoute
   '/registrar': typeof RegistrarRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/configuracoes' | '/registrar' | '/relatorio-mensal'
+  fullPaths:
+    '/' | '/configuracoes' | '/historico' | '/registrar' | '/relatorio-mensal'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/configuracoes' | '/registrar' | '/relatorio-mensal'
-  id: '__root__' | '/' | '/configuracoes' | '/registrar' | '/relatorio-mensal'
+  to: '/' | '/configuracoes' | '/historico' | '/registrar' | '/relatorio-mensal'
+  id:
+    | '__root__'
+    | '/'
+    | '/configuracoes'
+    | '/historico'
+    | '/registrar'
+    | '/relatorio-mensal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  HistoricoRoute: typeof HistoricoRoute
   RegistrarRoute: typeof RegistrarRoute
   RelatorioMensalRoute: typeof RelatorioMensalRoute
 }
@@ -83,6 +100,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historico': {
+      id: '/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof HistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/registrar': {
@@ -105,6 +129,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  HistoricoRoute: HistoricoRoute,
   RegistrarRoute: RegistrarRoute,
   RelatorioMensalRoute: RelatorioMensalRoute,
 }
