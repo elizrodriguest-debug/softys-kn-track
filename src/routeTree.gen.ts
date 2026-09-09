@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as RelatorioMensalRouteImport } from './routes/relatorio-mensal'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegistrarRoute = RegistrarRouteImport.update({
+  id: '/registrar',
+  path: '/registrar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatorioMensalRoute = RelatorioMensalRouteImport.update({
@@ -25,27 +37,35 @@ const RelatorioMensalRoute = RelatorioMensalRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/registrar': typeof RegistrarRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/registrar': typeof RegistrarRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/registrar': typeof RegistrarRoute
   '/relatorio-mensal': typeof RelatorioMensalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/relatorio-mensal'
+  fullPaths: '/' | '/configuracoes' | '/registrar' | '/relatorio-mensal'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/relatorio-mensal'
-  id: '__root__' | '/' | '/relatorio-mensal'
+  to: '/' | '/configuracoes' | '/registrar' | '/relatorio-mensal'
+  id: '__root__' | '/' | '/configuracoes' | '/registrar' | '/relatorio-mensal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
+  RegistrarRoute: typeof RegistrarRoute
   RelatorioMensalRoute: typeof RelatorioMensalRoute
 }
 
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/registrar': {
+      id: '/registrar'
+      path: '/registrar'
+      fullPath: '/registrar'
+      preLoaderRoute: typeof RegistrarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorio-mensal': {
@@ -70,6 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
+  RegistrarRoute: RegistrarRoute,
   RelatorioMensalRoute: RelatorioMensalRoute,
 }
 export const routeTree = rootRouteImport
