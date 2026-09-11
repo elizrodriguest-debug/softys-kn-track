@@ -48,7 +48,7 @@ export function byShiftSeries(records: DischargeRecord[], division: "INTERNO" | 
       row[k] = n;
       total += n;
     }
-    row.total = total;
+    row["total"] = total;
     return row;
   });
 }

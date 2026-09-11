@@ -252,7 +252,7 @@ export function Dashboard() {
                 <Tooltip />
                 <Legend />
                 {seriesKeys.map((k, i) => (
-                  <Bar key={k} dataKey={k} stackId="a" fill={seriesColor(k)} radius={i === seriesKeys.length - 1 ? [6, 6, 0, 0] : undefined}>
+                  <Bar key={k} dataKey={k} stackId="a" fill={seriesColor(k)} radius={i === seriesKeys.length - 1 ? [6, 6, 0, 0] : 0}>
                     <LabelList dataKey={k} position="center" fill="#fff" fontSize={11} formatter={(v: number) => (v > 0 ? v : "")} />
                     {i === seriesKeys.length - 1 && (
                       <LabelList dataKey="total" position="top" fontSize={12} fontWeight={700} />
