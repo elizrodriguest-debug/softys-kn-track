@@ -93,6 +93,37 @@ function Pill({ label, value }: { label: string; value: number }) {
   );
 }
 
+function DailyGoalChart({
+  title,
+  data,
+  dataKey,
+  color,
+}: {
+  title: string;
+  data: Array<Record<string, string | number>>;
+  dataKey: "Interno" | "Externo";
+  color: string;
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-base font-semibold">Relação diária de cumprimento de metas</h2>
+      <p className="mt-1 text-xs text-muted-foreground">{title}</p>
+      <div className="mt-4 h-[320px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+}
+
 function DivisionPanel({
   division,
   records,
@@ -340,24 +371,20 @@ function RelatorioMensalPage() {
         )}
       </div>
 
-      <section className="mt-5 rounded-xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="mb-4 font-display text-base font-semibold">
-          Relação diária de cumprimento de metas
-        </h2>
-        <div className="h-[320px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={porDia}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="Interno" fill={COLORS.brand} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Externo" fill={COLORS.tissue} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        <DailyGoalChart
+          title="Recebimento Interno"
+          data={porDia}
+          dataKey="Interno"
+          color={COLORS.brand}
+        />
+        <DailyGoalChart
+          title="Recebimento Externo"
+          data={porDia}
+          dataKey="Externo"
+          color={COLORS.tissue}
+        />
+      </div>
 
       <section id="detalhamento" className="mt-5 scroll-mt-28">
         <h2 className="mb-3 font-display text-base font-semibold">Detalhamento operacional</h2>
