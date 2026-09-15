@@ -126,10 +126,7 @@ function RegistrarPage() {
       date,
       time,
       shiftId: turno,
-      dockNumber,
-      carrierName,
       licensePlate,
-      driverName,
       notes,
       totalVolumes: num(totalVolumes),
       createdBy: session.operatorName,
@@ -151,6 +148,9 @@ function RegistrarPage() {
           }
         : {
             ...base,
+            dockNumber,
+            carrierName,
+            driverName,
             operationType,
             invoiceNumber,
             invoiceQuantity: num(invoiceQuantity),
@@ -204,18 +204,24 @@ function RegistrarPage() {
             <Field label={`Horário — turno identificado: ${shiftLabel(turno)}`}>
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </Field>
-            <Field label="Doca">
-              <Input value={dockNumber} onChange={(e) => setDock(e.target.value)} />
-            </Field>
-            <Field label="Transportadora">
-              <Input value={carrierName} onChange={(e) => setCarrier(e.target.value)} />
-            </Field>
+            {division === "EXTERNO" && (
+              <>
+                <Field label="Doca">
+                  <Input value={dockNumber} onChange={(e) => setDock(e.target.value)} />
+                </Field>
+                <Field label="Transportadora">
+                  <Input value={carrierName} onChange={(e) => setCarrier(e.target.value)} />
+                </Field>
+              </>
+            )}
             <Field label="Placa">
               <Input value={licensePlate} onChange={(e) => setPlate(e.target.value)} />
             </Field>
-            <Field label="Motorista">
-              <Input value={driverName} onChange={(e) => setDriver(e.target.value)} />
-            </Field>
+            {division === "EXTERNO" && (
+              <Field label="Motorista">
+                <Input value={driverName} onChange={(e) => setDriver(e.target.value)} />
+              </Field>
+            )}
             <NumField label="Volumes" value={totalVolumes} onChange={setVolumes} />
             {division === "INTERNO" ? (
               <Field label="Fábrica / Origem">
