@@ -91,9 +91,7 @@ function RegistrarPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState(new Date().toTimeString().slice(0, 5));
   const [dockNumber, setDock] = useState("");
-  const [carrierName, setCarrier] = useState("");
   const [licensePlate, setPlate] = useState("");
-  const [driverName, setDriver] = useState("");
   const [totalVolumes, setVolumes] = useState(String(DEFAULT_PALLETS_PER_VEHICLE));
   const [notes, setNotes] = useState("");
 
