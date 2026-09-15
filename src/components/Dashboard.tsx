@@ -300,10 +300,17 @@ export function Dashboard() {
                 <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="l" dataKey="Ocorrências" fill="#f59e0b" radius={[6, 6, 0, 0]}>
+                <Bar yAxisId="l" dataKey="Ocorrências" fill="var(--color-chart-5)" radius={[6, 6, 0, 0]}>
                   <LabelList dataKey="Ocorrências" position="top" fontSize={11} />
                 </Bar>
-                <Line yAxisId="r" type="monotone" dataKey="Acumulado" stroke="#003369" strokeWidth={2} dot={{ r: 3 }} />
+                <Line
+                  yAxisId="r"
+                  type="monotone"
+                  dataKey="Acumulado"
+                  stroke="var(--color-success)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "var(--color-success)" }}
+                />
               </ComposedChart>
             </ResponsiveContainer>
           )}
