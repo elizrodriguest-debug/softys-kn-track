@@ -126,10 +126,7 @@ function RegistrarPage() {
       date,
       time,
       shiftId: turno,
-      dockNumber,
-      carrierName,
       licensePlate,
-      driverName,
       notes,
       totalVolumes: num(totalVolumes),
       createdBy: session.operatorName,
@@ -151,6 +148,9 @@ function RegistrarPage() {
           }
         : {
             ...base,
+            dockNumber,
+            carrierName,
+            driverName,
             operationType,
             invoiceNumber,
             invoiceQuantity: num(invoiceQuantity),
