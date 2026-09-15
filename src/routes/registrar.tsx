@@ -149,8 +149,6 @@ function RegistrarPage() {
         : {
             ...base,
             dockNumber,
-            carrierName,
-            driverName,
             operationType,
             invoiceNumber,
             invoiceQuantity: num(invoiceQuantity),
