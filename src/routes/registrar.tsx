@@ -18,7 +18,6 @@ import { useStore } from "@/lib/store";
 import {
   DEFAULT_PALLETS_PER_VEHICLE,
   DIVISION_LABEL,
-  DIVISION_OWNER,
   EXTERNAL_OPERATIONS,
   FACTORIES,
   shiftFromTime,
