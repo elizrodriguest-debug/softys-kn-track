@@ -91,9 +91,7 @@ function RegistrarPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState(new Date().toTimeString().slice(0, 5));
   const [dockNumber, setDock] = useState("");
-  const [carrierName, setCarrier] = useState("");
   const [licensePlate, setPlate] = useState("");
-  const [driverName, setDriver] = useState("");
   const [totalVolumes, setVolumes] = useState(String(DEFAULT_PALLETS_PER_VEHICLE));
   const [notes, setNotes] = useState("");
 
@@ -149,8 +147,6 @@ function RegistrarPage() {
         : {
             ...base,
             dockNumber,
-            carrierName,
-            driverName,
             operationType,
             invoiceNumber,
             invoiceQuantity: num(invoiceQuantity),
@@ -205,23 +201,13 @@ function RegistrarPage() {
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </Field>
             {division === "EXTERNO" && (
-              <>
-                <Field label="Doca">
-                  <Input value={dockNumber} onChange={(e) => setDock(e.target.value)} />
-                </Field>
-                <Field label="Transportadora">
-                  <Input value={carrierName} onChange={(e) => setCarrier(e.target.value)} />
-                </Field>
-              </>
+              <Field label="Doca">
+                <Input value={dockNumber} onChange={(e) => setDock(e.target.value)} />
+              </Field>
             )}
             <Field label="Placa">
               <Input value={licensePlate} onChange={(e) => setPlate(e.target.value)} />
             </Field>
-            {division === "EXTERNO" && (
-              <Field label="Motorista">
-                <Input value={driverName} onChange={(e) => setDriver(e.target.value)} />
-              </Field>
-            )}
             <NumField label="Volumes" value={totalVolumes} onChange={setVolumes} />
             {division === "INTERNO" ? (
               <Field label="Fábrica / Origem">
