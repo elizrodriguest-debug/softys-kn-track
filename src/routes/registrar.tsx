@@ -18,7 +18,6 @@ import { useStore } from "@/lib/store";
 import {
   DEFAULT_PALLETS_PER_VEHICLE,
   DIVISION_LABEL,
-  DIVISION_OWNER,
   EXTERNAL_OPERATIONS,
   FACTORIES,
   shiftFromTime,
@@ -189,7 +188,6 @@ function RegistrarPage() {
             )}
           >
             {DIVISION_LABEL[d]}
-            <span className="ml-1.5 text-[11px] opacity-70">({DIVISION_OWNER[d]})</span>
           </button>
         ))}
       </div>
