@@ -189,7 +189,6 @@ function RegistrarPage() {
             )}
           >
             {DIVISION_LABEL[d]}
-            <span className="ml-1.5 text-[11px] opacity-70">({DIVISION_OWNER[d]})</span>
           </button>
         ))}
       </div>
