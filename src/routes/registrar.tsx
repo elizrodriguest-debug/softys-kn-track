@@ -218,7 +218,7 @@ function RegistrarPage() {
             <Field label="Motorista">
               <Input value={driverName} onChange={(e) => setDriver(e.target.value)} />
             </Field>
-            <NumField label="Volumes / Pallets" value={totalVolumes} onChange={setVolumes} />
+            <NumField label="Volumes" value={totalVolumes} onChange={setVolumes} />
             {division === "INTERNO" ? (
               <Field label="Fábrica / Origem">
                 <Select value={factoryType} onValueChange={(v) => setFactory(v as FactoryType)}>
