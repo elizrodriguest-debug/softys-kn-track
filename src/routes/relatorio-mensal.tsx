@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   Bar,
-  BarChart,
   CartesianGrid,
+  ComposedChart,
   Legend,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -97,11 +98,13 @@ function DailyGoalChart({
   title,
   data,
   dataKey,
+  goalKey,
   color,
 }: {
   title: string;
   data: Array<Record<string, string | number>>;
   dataKey: "Interno" | "Externo";
+  goalKey: "MetaInterna" | "MetaExterna";
   color: string;
 }) {
   return (
@@ -110,14 +113,23 @@ function DailyGoalChart({
       <p className="mt-1 text-xs text-muted-foreground">{title}</p>
       <div className="mt-4 h-[320px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
+          <ComposedChart data={data}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip />
             <Legend />
             <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} />
-          </BarChart>
+            <Line
+              type="linear"
+              dataKey={goalKey}
+              name="Meta"
+              stroke="var(--color-warning)"
+              strokeWidth={2.5}
+              strokeDasharray="7 4"
+              dot={false}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </section>
@@ -376,12 +388,14 @@ function RelatorioMensalPage() {
           title="Recebimento Interno"
           data={porDia}
           dataKey="Interno"
+          goalKey="MetaInterna"
           color={COLORS.brand}
         />
         <DailyGoalChart
           title="Recebimento Externo"
           data={porDia}
           dataKey="Externo"
+          goalKey="MetaExterna"
           color={COLORS.tissue}
         />
       </div>
