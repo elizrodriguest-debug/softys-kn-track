@@ -84,7 +84,7 @@ function NumField({
 const num = (v: string) => Math.max(0, Number(v) || 0);
 
 function RegistrarPage() {
-  const { saveRecord, session } = useStore();
+  const { saveRecord, session, records } = useStore();
   const router = useRouter();
 
   const [division, setDivision] = useState<DivisionType>("INTERNO");
@@ -118,7 +118,20 @@ function RegistrarPage() {
 
   const turno = useMemo(() => shiftFromTime(time), [time]);
 
+  const asnDuplicado = useMemo(() => {
+    const alvo = asnNumber.trim().toUpperCase();
+    if (division !== "INTERNO" || !alvo) return false;
+    return records.some(
+      (r) => r.division === "INTERNO" && (r.asnNumber ?? "").trim().toUpperCase() === alvo,
+    );
+  }, [asnNumber, division, records]);
+
   const submit = () => {
+    if (asnDuplicado) {
+      toast.error(`ASN duplicado: o número ${asnNumber.trim()} já foi lançado.`);
+      return;
+    }
+
     const base = {
       division,
       date,
