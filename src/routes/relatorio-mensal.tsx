@@ -332,6 +332,18 @@ function RelatorioMensalPage() {
     });
   }, [doMes, settings]);
 
+  const porMes = useMemo(() => {
+    return MESES_CURTOS.map((label, i) => {
+      const p = `${ano}-${String(i + 1).padStart(2, "0")}`;
+      const rs = records.filter((r) => r.date.startsWith(p));
+      return {
+        mes: label,
+        Interno: rs.filter((r) => r.division === "INTERNO").length,
+        Externo: rs.filter((r) => r.division === "EXTERNO").length,
+      };
+    });
+  }, [records, ano]);
+
   const exportar = () => {
     exportCSV(
       `relatorio-mensal-${prefix}.csv`,
