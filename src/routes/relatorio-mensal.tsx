@@ -83,6 +83,8 @@ const MESES = [
   "Dezembro",
 ];
 
+const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
 const COLORS = { tissue: "#10b981", personal: "#6366f1", brand: "#003369", ambar: "#F59E0B" };
 
 function Pill({ label, value }: { label: string; value: number }) {
@@ -128,6 +130,50 @@ function DailyGoalChart({
               strokeWidth={2.5}
               strokeDasharray="7 4"
               dot={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+}
+
+function MonthlyCumulativeChart({
+  title,
+  data,
+  dataKey,
+  color,
+}: {
+  title: string;
+  data: Array<Record<string, string | number>>;
+  dataKey: "Interno" | "Externo";
+  color: string;
+}) {
+  let acc = 0;
+  const series = data.map((row) => {
+    acc += Number(row[dataKey] ?? 0);
+    return { ...row, Acumulado: acc };
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-base font-semibold">Entrega acumulada mensal</h2>
+      <p className="mt-1 text-xs text-muted-foreground">{title}</p>
+      <div className="mt-4 h-[320px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={series}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey={dataKey} name="Descargas no mês" fill={color} radius={[4, 4, 0, 0]} />
+            <Line
+              type="monotone"
+              dataKey="Acumulado"
+              stroke="var(--color-warning)"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
