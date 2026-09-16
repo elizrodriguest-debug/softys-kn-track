@@ -92,8 +92,8 @@ export const DIVISION_OWNER: Record<DivisionType, string> = {
 };
 
 export const FACTORY_COLORS: Record<FactoryType, string> = {
-  Tissue: "#10b981",
-  Personal: "#6366f1",
+  Tissue: "var(--color-success)",
+  Personal: "var(--color-brand)",
 };
 
 /** Identifica o turno a partir do horário HH:mm informado. */
