@@ -84,7 +84,7 @@ function NumField({
 const num = (v: string) => Math.max(0, Number(v) || 0);
 
 function RegistrarPage() {
-  const { saveRecord, session } = useStore();
+  const { saveRecord, session, records } = useStore();
   const router = useRouter();
 
   const [division, setDivision] = useState<DivisionType>("INTERNO");
@@ -118,7 +118,20 @@ function RegistrarPage() {
 
   const turno = useMemo(() => shiftFromTime(time), [time]);
 
+  const asnDuplicado = useMemo(() => {
+    const alvo = asnNumber.trim().toUpperCase();
+    if (division !== "INTERNO" || !alvo) return false;
+    return records.some(
+      (r) => r.division === "INTERNO" && (r.asnNumber ?? "").trim().toUpperCase() === alvo,
+    );
+  }, [asnNumber, division, records]);
+
   const submit = () => {
+    if (asnDuplicado) {
+      toast.error(`ASN duplicado: o número ${asnNumber.trim()} já foi lançado.`);
+      return;
+    }
+
     const base = {
       division,
       date,
@@ -257,7 +270,17 @@ function RegistrarPage() {
           {division === "INTERNO" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Número do ASN">
-                <Input value={asnNumber} onChange={(e) => setAsn(e.target.value)} />
+                <Input
+                  value={asnNumber}
+                  onChange={(e) => setAsn(e.target.value)}
+                  aria-invalid={asnDuplicado}
+                  className={cn(asnDuplicado && "border-destructive focus-visible:ring-destructive")}
+                />
+                {asnDuplicado && (
+                  <p className="text-xs font-medium text-destructive">
+                    Este número de ASN já foi lançado.
+                  </p>
+                )}
               </Field>
               <div className="flex items-end gap-2 pb-2">
                 <Checkbox
