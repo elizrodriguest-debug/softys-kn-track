@@ -83,6 +83,8 @@ const MESES = [
   "Dezembro",
 ];
 
+const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
 const COLORS = { tissue: "#10b981", personal: "#6366f1", brand: "#003369", ambar: "#F59E0B" };
 
 function Pill({ label, value }: { label: string; value: number }) {
@@ -128,6 +130,50 @@ function DailyGoalChart({
               strokeWidth={2.5}
               strokeDasharray="7 4"
               dot={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+}
+
+function MonthlyCumulativeChart({
+  title,
+  data,
+  dataKey,
+  color,
+}: {
+  title: string;
+  data: Array<Record<string, string | number>>;
+  dataKey: "Interno" | "Externo";
+  color: string;
+}) {
+  let acc = 0;
+  const series = data.map((row) => {
+    acc += Number(row[dataKey] ?? 0);
+    return { ...row, Acumulado: acc };
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-base font-semibold">Entrega acumulada mensal</h2>
+      <p className="mt-1 text-xs text-muted-foreground">{title}</p>
+      <div className="mt-4 h-[320px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={series}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey={dataKey} name="Descargas no mês" fill={color} radius={[4, 4, 0, 0]} />
+            <Line
+              type="monotone"
+              dataKey="Acumulado"
+              stroke="var(--color-warning)"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -286,6 +332,18 @@ function RelatorioMensalPage() {
     });
   }, [doMes, settings]);
 
+  const porMes = useMemo(() => {
+    return MESES_CURTOS.map((label, i) => {
+      const p = `${ano}-${String(i + 1).padStart(2, "0")}`;
+      const rs = records.filter((r) => r.date.startsWith(p));
+      return {
+        mes: label,
+        Interno: rs.filter((r) => r.division === "INTERNO").length,
+        Externo: rs.filter((r) => r.division === "EXTERNO").length,
+      };
+    });
+  }, [records, ano]);
+
   const exportar = () => {
     exportCSV(
       `relatorio-mensal-${prefix}.csv`,
@@ -396,6 +454,21 @@ function RelatorioMensalPage() {
           data={porDia}
           dataKey="Externo"
           goalKey="MetaExterna"
+          color={COLORS.tissue}
+        />
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        <MonthlyCumulativeChart
+          title="Recebimento Interno"
+          data={porMes}
+          dataKey="Interno"
+          color={COLORS.brand}
+        />
+        <MonthlyCumulativeChart
+          title="Recebimento Externo"
+          data={porMes}
+          dataKey="Externo"
           color={COLORS.tissue}
         />
       </div>
