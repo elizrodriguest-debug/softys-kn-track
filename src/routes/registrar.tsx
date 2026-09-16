@@ -270,7 +270,17 @@ function RegistrarPage() {
           {division === "INTERNO" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Número do ASN">
-                <Input value={asnNumber} onChange={(e) => setAsn(e.target.value)} />
+                <Input
+                  value={asnNumber}
+                  onChange={(e) => setAsn(e.target.value)}
+                  aria-invalid={asnDuplicado}
+                  className={cn(asnDuplicado && "border-destructive focus-visible:ring-destructive")}
+                />
+                {asnDuplicado && (
+                  <p className="text-xs font-medium text-destructive">
+                    Este número de ASN já foi lançado.
+                  </p>
+                )}
               </Field>
               <div className="flex items-end gap-2 pb-2">
                 <Checkbox
