@@ -458,6 +458,21 @@ function RelatorioMensalPage() {
         />
       </div>
 
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        <MonthlyCumulativeChart
+          title="Recebimento Interno"
+          data={porMes}
+          dataKey="Interno"
+          color={COLORS.brand}
+        />
+        <MonthlyCumulativeChart
+          title="Recebimento Externo"
+          data={porMes}
+          dataKey="Externo"
+          color={COLORS.tissue}
+        />
+      </div>
+
       <section id="detalhamento" className="mt-5 scroll-mt-28">
         <h2 className="mb-3 font-display text-base font-semibold">Detalhamento operacional</h2>
 
