@@ -300,7 +300,7 @@ export function Dashboard() {
                 <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="l" dataKey="Ocorrências" fill="var(--color-chart-5)" radius={[6, 6, 0, 0]}>
+                <Bar yAxisId="l" dataKey="Ocorrências" fill="#003369" radius={[6, 6, 0, 0]}>
                   <LabelList dataKey="Ocorrências" position="top" fontSize={11} />
                 </Bar>
                 <Line
