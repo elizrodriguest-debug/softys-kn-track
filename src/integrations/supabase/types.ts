@@ -14,16 +14,302 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          email_cc: string
+          email_to: string
+          goal_externo: number
+          goal_interno: number
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          email_cc?: string
+          email_to?: string
+          goal_externo?: number
+          goal_interno?: number
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          email_cc?: string
+          email_to?: string
+          goal_externo?: number
+          goal_interno?: number
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          action: string
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
+      discharge_records: {
+        Row: {
+          asn_divergence_details: string | null
+          asn_number: string | null
+          broken_pallets_count: number
+          carrier_name: string | null
+          client_request_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          damaged_products_count: number
+          date: string
+          divergent_quantity_amount: number
+          division: string
+          dock_number: string | null
+          driver_name: string | null
+          entry_divergence_details: string | null
+          factory_type: string | null
+          fallen_pallets_count: number
+          has_quantity_divergence: boolean
+          id: string
+          invalid_ilpn_count: number
+          invoice_number: string | null
+          invoice_quantity: number
+          license_plate: string | null
+          missing_asn: boolean
+          missing_asn_quantity: number
+          missing_ilpn_shipment_count: number
+          missing_standard_label: boolean
+          notes: string | null
+          operation_type: string | null
+          shift_id: string
+          status: Database["public"]["Enums"]["record_status"]
+          time: string
+          total_volumes: number | null
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+          validated_at: string | null
+          validated_by: string | null
+          vehicle_quantity: number
+          version: number
+        }
+        Insert: {
+          asn_divergence_details?: string | null
+          asn_number?: string | null
+          broken_pallets_count?: number
+          carrier_name?: string | null
+          client_request_id?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          damaged_products_count?: number
+          date: string
+          divergent_quantity_amount?: number
+          division: string
+          dock_number?: string | null
+          driver_name?: string | null
+          entry_divergence_details?: string | null
+          factory_type?: string | null
+          fallen_pallets_count?: number
+          has_quantity_divergence?: boolean
+          id?: string
+          invalid_ilpn_count?: number
+          invoice_number?: string | null
+          invoice_quantity?: number
+          license_plate?: string | null
+          missing_asn?: boolean
+          missing_asn_quantity?: number
+          missing_ilpn_shipment_count?: number
+          missing_standard_label?: boolean
+          notes?: string | null
+          operation_type?: string | null
+          shift_id: string
+          status?: Database["public"]["Enums"]["record_status"]
+          time: string
+          total_volumes?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          vehicle_quantity?: number
+          version?: number
+        }
+        Update: {
+          asn_divergence_details?: string | null
+          asn_number?: string | null
+          broken_pallets_count?: number
+          carrier_name?: string | null
+          client_request_id?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          damaged_products_count?: number
+          date?: string
+          divergent_quantity_amount?: number
+          division?: string
+          dock_number?: string | null
+          driver_name?: string | null
+          entry_divergence_details?: string | null
+          factory_type?: string | null
+          fallen_pallets_count?: number
+          has_quantity_divergence?: boolean
+          id?: string
+          invalid_ilpn_count?: number
+          invoice_number?: string | null
+          invoice_quantity?: number
+          license_plate?: string | null
+          missing_asn?: boolean
+          missing_asn_quantity?: number
+          missing_ilpn_shipment_count?: number
+          missing_standard_label?: boolean
+          notes?: string | null
+          operation_type?: string | null
+          shift_id?: string
+          status?: Database["public"]["Enums"]["record_status"]
+          time?: string
+          total_volumes?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          vehicle_quantity?: number
+          version?: number
+        }
+        Relationships: []
+      }
+      logbook_entries: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          created_at: string
+          date: string
+          id: string
+          notes: string
+          shift_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string
+          shift_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string
+          shift_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          full_name: string
+          id: string
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          full_name: string
+          id: string
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          full_name?: string
+          id?: string
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_write: { Args: { _user_id: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_active_user: { Args: { _user_id: string }; Returns: boolean }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "ADMINISTRADOR" | "OPERACIONAL" | "VISUALIZADOR"
+      record_status: "PENDENTE" | "VALIDADO" | "CANCELADO"
+      user_status: "ATIVO" | "INATIVO" | "PENDENTE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +436,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["ADMINISTRADOR", "OPERACIONAL", "VISUALIZADOR"],
+      record_status: ["PENDENTE", "VALIDADO", "CANCELADO"],
+      user_status: ["ATIVO", "INATIVO", "PENDENTE"],
+    },
   },
 } as const
