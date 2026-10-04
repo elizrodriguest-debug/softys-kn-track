@@ -9,129 +9,131 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
-import { Route as HistoricoRouteImport } from './routes/historico'
-import { Route as RegistrarRouteImport } from './routes/registrar'
-import { Route as RelatorioMensalRouteImport } from './routes/relatorio-mensal'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedRegistrarRouteImport } from './routes/_authenticated/registrar'
+import { Route as AuthenticatedRelatorioMensalRouteImport } from './routes/_authenticated/relatorio-mensal'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoricoRoute = HistoricoRouteImport.update({
-  id: '/historico',
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/_authenticated/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
+  id: '/_authenticated/historico',
   path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegistrarRoute = RegistrarRouteImport.update({
-  id: '/registrar',
+const AuthenticatedRegistrarRoute = AuthenticatedRegistrarRouteImport.update({
+  id: '/_authenticated/registrar',
   path: '/registrar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RelatorioMensalRoute = RelatorioMensalRouteImport.update({
-  id: '/relatorio-mensal',
-  path: '/relatorio-mensal',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedRelatorioMensalRoute =
+  AuthenticatedRelatorioMensalRouteImport.update({
+    id: '/_authenticated/relatorio-mensal',
+    path: '/relatorio-mensal',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/configuracoes': typeof ConfiguracoesRoute
-  '/historico': typeof HistoricoRoute
-  '/registrar': typeof RegistrarRoute
-  '/relatorio-mensal': typeof RelatorioMensalRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
+  '/registrar': typeof AuthenticatedRegistrarRoute
+  '/relatorio-mensal': typeof AuthenticatedRelatorioMensalRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/configuracoes': typeof ConfiguracoesRoute
-  '/historico': typeof HistoricoRoute
-  '/registrar': typeof RegistrarRoute
-  '/relatorio-mensal': typeof RelatorioMensalRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
+  '/registrar': typeof AuthenticatedRegistrarRoute
+  '/relatorio-mensal': typeof AuthenticatedRelatorioMensalRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/configuracoes': typeof ConfiguracoesRoute
-  '/historico': typeof HistoricoRoute
-  '/registrar': typeof RegistrarRoute
-  '/relatorio-mensal': typeof RelatorioMensalRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/registrar': typeof AuthenticatedRegistrarRoute
+  '/_authenticated/relatorio-mensal': typeof AuthenticatedRelatorioMensalRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/configuracoes' | '/historico' | '/registrar' | '/relatorio-mensal'
+    '/configuracoes' | '/historico' | '/registrar' | '/relatorio-mensal' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/configuracoes' | '/historico' | '/registrar' | '/relatorio-mensal'
+  to: '/configuracoes' | '/historico' | '/registrar' | '/relatorio-mensal' | '/'
   id:
     | '__root__'
-    | '/'
-    | '/configuracoes'
-    | '/historico'
-    | '/registrar'
-    | '/relatorio-mensal'
+    | '/_authenticated/configuracoes'
+    | '/_authenticated/historico'
+    | '/_authenticated/registrar'
+    | '/_authenticated/relatorio-mensal'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ConfiguracoesRoute: typeof ConfiguracoesRoute
-  HistoricoRoute: typeof HistoricoRoute
-  RegistrarRoute: typeof RegistrarRoute
-  RelatorioMensalRoute: typeof RelatorioMensalRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedRegistrarRoute: typeof AuthenticatedRegistrarRoute
+  AuthenticatedRelatorioMensalRoute: typeof AuthenticatedRelatorioMensalRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/configuracoes': {
-      id: '/configuracoes'
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
       path: '/configuracoes'
       fullPath: '/configuracoes'
-      preLoaderRoute: typeof ConfiguracoesRouteImport
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/historico': {
-      id: '/historico'
+    '/_authenticated/historico': {
+      id: '/_authenticated/historico'
       path: '/historico'
       fullPath: '/historico'
-      preLoaderRoute: typeof HistoricoRouteImport
+      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/registrar': {
-      id: '/registrar'
+    '/_authenticated/registrar': {
+      id: '/_authenticated/registrar'
       path: '/registrar'
       fullPath: '/registrar'
-      preLoaderRoute: typeof RegistrarRouteImport
+      preLoaderRoute: typeof AuthenticatedRegistrarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/relatorio-mensal': {
-      id: '/relatorio-mensal'
+    '/_authenticated/relatorio-mensal': {
+      id: '/_authenticated/relatorio-mensal'
       path: '/relatorio-mensal'
       fullPath: '/relatorio-mensal'
-      preLoaderRoute: typeof RelatorioMensalRouteImport
+      preLoaderRoute: typeof AuthenticatedRelatorioMensalRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  ConfiguracoesRoute: ConfiguracoesRoute,
-  HistoricoRoute: HistoricoRoute,
-  RegistrarRoute: RegistrarRoute,
-  RelatorioMensalRoute: RelatorioMensalRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedRegistrarRoute: AuthenticatedRegistrarRoute,
+  AuthenticatedRelatorioMensalRoute: AuthenticatedRelatorioMensalRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
