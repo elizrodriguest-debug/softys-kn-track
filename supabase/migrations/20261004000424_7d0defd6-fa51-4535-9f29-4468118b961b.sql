@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role), public.is_active_user(uuid), public.can_write(uuid), public.is_admin(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.audit_trigger(), public.discharge_before_write(), public.logbook_before_write() FROM PUBLIC, anon, authenticated;
