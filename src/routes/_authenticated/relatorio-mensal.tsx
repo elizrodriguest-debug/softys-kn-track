@@ -49,7 +49,7 @@ import {
 import { exportCSV } from "@/lib/export";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/relatorio-mensal")({
+export const Route = createFileRoute("/_authenticated/relatorio-mensal")({
   head: () => ({
     meta: [
       { title: "Relatório Mensal | Softys × Kuehne+Nagel" },

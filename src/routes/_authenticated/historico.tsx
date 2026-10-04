@@ -35,7 +35,7 @@ import {
 } from "@/lib/types";
 import { exportCSV } from "@/lib/export";
 
-export const Route = createFileRoute("/historico")({
+export const Route = createFileRoute("/_authenticated/historico")({
   head: () => ({
     meta: [
       { title: "Histórico e Consultas | Softys × Kuehne+Nagel" },
