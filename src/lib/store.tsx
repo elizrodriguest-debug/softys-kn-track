@@ -4,27 +4,18 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import {
-  DEFAULT_GOALS,
-  DEFAULT_PALLETS_PER_VEHICLE,
-  EXTERNAL_OPERATIONS,
-  SHIFTS,
-  shiftFromTime,
-  type DischargeRecord,
-  type DivisionType,
-  type ExternalOperationType,
-  type FactoryType,
-  type LogbookEntry,
-  type ShiftId,
-} from "./types";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_GOALS, type DischargeRecord, type DivisionType, type LogbookEntry, type RecordStatus, type ShiftId } from "./types";
+import type { AppRole } from "./auth-utils";
 
-const K_RECORDS = "inbound-kn-softys:records:v2";
-const K_LOGBOOK = "inbound-kn-softys:logbook:v2";
-const K_SETTINGS = "inbound-kn-softys:settings:v2";
-const K_SESSION = "inbound-kn-softys:session:v2";
+/** Banco central (Lovable Cloud) é a fonte oficial dos dados.
+ *  Apenas a preferência visual de turno fica no navegador. */
+const K_SHIFT = "inbound-kn-softys:ui-shift";
 
 export interface Settings {
   goals: Record<DivisionType, number>;
@@ -37,276 +28,380 @@ export interface Session {
   shiftId: ShiftId;
 }
 
-const DEFAULT_SETTINGS: Settings = {
-  goals: { ...DEFAULT_GOALS },
-  emailTo: "operacao.caieiras@softys.com",
-  emailCc: "supervisao.inbound@kuehne-nagel.com",
-};
-
-const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-
-const CARRIERS = [
-  "Kuehne+Nagel",
-  "Transportes Andorinha",
-  "Rodoviário Sul",
-  "TransLog Express",
-  "Via Norte Cargas",
-];
-const PLATES = ["RTX3D45", "KLM7A21", "BRA2E19", "FGH8B03", "QWE4C77", "ZXC9D12", "JPL5F88"];
-const DRIVERS = [
-  "Marcos Ribeiro",
-  "Juliana Prado",
-  "Carlos Menezes",
-  "Renata Lopes",
-  "Anderson Silva",
-  "Paulo Tavares",
-];
-
-const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)]!;
-const rnd = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
-
-const SHIFT_HOURS: Record<ShiftId, number[]> = {
-  T1: [6, 7, 8, 9, 10, 11, 12, 13, 14],
-  T2: [14, 15, 16, 17, 18, 19, 20, 21, 22],
-  T3: [23, 0, 1, 2, 3, 4, 5],
-};
-
-function timeInShift(shift: ShiftId): string {
-  const h = pick(SHIFT_HOURS[shift]);
-  let m = rnd(0, 59);
-  if (shift === "T1" && h === 14) m = rnd(0, 19);
-  if (shift === "T2" && h === 14) m = rnd(20, 59);
-  if (shift === "T2" && h === 22) m = rnd(0, 34);
-  if (shift === "T3" && h === 23) m = rnd(0, 59);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+export interface Profile {
+  id: string;
+  fullName: string;
+  username: string;
+  status: string;
+  role: AppRole;
 }
 
-function seedRecords(): DischargeRecord[] {
-  const out: DischargeRecord[] = [];
-  const today = new Date();
-  for (let d = 20; d >= 0; d--) {
-    const dt = new Date(today);
-    dt.setDate(today.getDate() - d);
-    const date = dt.toISOString().slice(0, 10);
-    for (const s of SHIFTS) {
-      // Recebimento Interno (Softys)
-      const internos = rnd(20, 27);
-      for (let i = 0; i < internos; i++) {
-        const time = timeInShift(s.id);
-        const anomaly = Math.random() < 0.3;
-        const factoryType: FactoryType = Math.random() < 0.55 ? "Tissue" : "Personal";
-        const missingAsn = anomaly && Math.random() < 0.18;
-        out.push({
-          id: uid(),
-          division: "INTERNO",
-          date,
-          time,
-          shiftId: shiftFromTime(time),
-          dockNumber: String(rnd(1, 12)),
-          carrierName: pick(CARRIERS),
-          licensePlate: pick(PLATES),
-          driverName: pick(DRIVERS),
-          notes: "",
-          totalVolumes: Math.random() < 0.75 ? DEFAULT_PALLETS_PER_VEHICLE : rnd(14, 32),
-          factoryType,
-          asnNumber: missingAsn ? "" : `ASN-${rnd(100000, 999999)}`,
-          missingAsn,
-          missingAsnQuantity: missingAsn ? rnd(5, 28) : 0,
-          asnDivergenceDetails:
-            anomaly && Math.random() < 0.15 ? "Quantidade de ASN divergente do físico" : "",
-          brokenPalletsCount: anomaly && Math.random() < 0.45 ? rnd(1, 3) : 0,
-          fallenPalletsCount: anomaly && Math.random() < 0.3 ? rnd(1, 2) : 0,
-          invalidILPNCount: anomaly && Math.random() < 0.35 ? rnd(1, 4) : 0,
-          missingILPNShipmentCount: anomaly && Math.random() < 0.3 ? rnd(1, 3) : 0,
-          createdAt: new Date(dt).toISOString(),
-          createdBy: "Demonstração",
-        });
-      }
-      // Recebimento Externo (Kuehne+Nagel)
-      const externos = rnd(3, 6);
-      for (let i = 0; i < externos; i++) {
-        const time = timeInShift(s.id);
-        const anomaly = Math.random() < 0.33;
-        const operationType: ExternalOperationType = pick(EXTERNAL_OPERATIONS);
-        const invoiceQuantity = rnd(120, 900);
-        const hasQuantityDivergence = anomaly && Math.random() < 0.4;
-        const diff = hasQuantityDivergence ? rnd(1, 20) : 0;
-        out.push({
-          id: uid(),
-          division: "EXTERNO",
-          date,
-          time,
-          shiftId: shiftFromTime(time),
-          dockNumber: String(rnd(1, 12)),
-          carrierName: pick(CARRIERS),
-          licensePlate: pick(PLATES),
-          driverName: pick(DRIVERS),
-          notes: "",
-          totalVolumes: rnd(80, 600),
-          operationType,
-          invoiceNumber: `NF-${rnd(10000, 99999)}`,
-          invoiceQuantity,
-          vehicleQuantity: invoiceQuantity - diff,
-          hasQuantityDivergence,
-          divergentQuantityAmount: diff,
-          missingStandardLabel: anomaly && Math.random() < 0.35,
-          damagedProductsCount: anomaly && Math.random() < 0.4 ? rnd(1, 6) : 0,
-          fallenPalletsCount: anomaly && Math.random() < 0.25 ? rnd(1, 2) : 0,
-          entryDivergenceDetails:
-            anomaly && Math.random() < 0.2 ? "Divergência de entrada apontada na conferência" : "",
-          createdAt: new Date(dt).toISOString(),
-          createdBy: "Demonstração",
-        });
-      }
-    }
+const DEFAULT_SETTINGS: Settings = {
+  goals: { ...DEFAULT_GOALS },
+  emailTo: "",
+  emailCc: "",
+};
+
+type Row = Record<string, any>;
+
+function fromRow(r: Row): DischargeRecord {
+  return {
+    id: r.id,
+    division: r.division,
+    date: r.date,
+    time: r.time,
+    shiftId: r.shift_id,
+    dockNumber: r.dock_number ?? undefined,
+    carrierName: r.carrier_name ?? undefined,
+    licensePlate: r.license_plate ?? undefined,
+    driverName: r.driver_name ?? undefined,
+    notes: r.notes ?? undefined,
+    totalVolumes: r.total_volumes ?? undefined,
+    factoryType: r.factory_type ?? undefined,
+    asnNumber: r.asn_number ?? undefined,
+    missingAsn: r.missing_asn,
+    missingAsnQuantity: r.missing_asn_quantity,
+    asnDivergenceDetails: r.asn_divergence_details ?? undefined,
+    brokenPalletsCount: r.broken_pallets_count,
+    fallenPalletsCount: r.fallen_pallets_count,
+    invalidILPNCount: r.invalid_ilpn_count,
+    missingILPNShipmentCount: r.missing_ilpn_shipment_count,
+    operationType: r.operation_type ?? undefined,
+    invoiceNumber: r.invoice_number ?? undefined,
+    invoiceQuantity: r.invoice_quantity,
+    vehicleQuantity: r.vehicle_quantity,
+    hasQuantityDivergence: r.has_quantity_divergence,
+    divergentQuantityAmount: r.divergent_quantity_amount,
+    missingStandardLabel: r.missing_standard_label,
+    damagedProductsCount: r.damaged_products_count,
+    entryDivergenceDetails: r.entry_divergence_details ?? undefined,
+    createdAt: r.created_at,
+    createdBy: r.created_by_name ?? undefined,
+    createdById: r.created_by,
+    status: r.status,
+    version: r.version,
+    updatedAt: r.updated_at,
+    updatedByName: r.updated_by_name ?? undefined,
+  };
+}
+
+function toRow(r: Partial<DischargeRecord>): Row {
+  const m: Record<string, string> = {
+    division: "division", date: "date", time: "time", shiftId: "shift_id",
+    dockNumber: "dock_number", carrierName: "carrier_name", licensePlate: "license_plate",
+    driverName: "driver_name", notes: "notes", totalVolumes: "total_volumes",
+    factoryType: "factory_type", asnNumber: "asn_number", missingAsn: "missing_asn",
+    missingAsnQuantity: "missing_asn_quantity", asnDivergenceDetails: "asn_divergence_details",
+    brokenPalletsCount: "broken_pallets_count", fallenPalletsCount: "fallen_pallets_count",
+    invalidILPNCount: "invalid_ilpn_count", missingILPNShipmentCount: "missing_ilpn_shipment_count",
+    operationType: "operation_type", invoiceNumber: "invoice_number",
+    invoiceQuantity: "invoice_quantity", vehicleQuantity: "vehicle_quantity",
+    hasQuantityDivergence: "has_quantity_divergence",
+    divergentQuantityAmount: "divergent_quantity_amount",
+    missingStandardLabel: "missing_standard_label", damagedProductsCount: "damaged_products_count",
+    entryDivergenceDetails: "entry_divergence_details", status: "status", version: "version",
+  };
+  const out: Row = {};
+  for (const [k, col] of Object.entries(m)) {
+    const v = (r as Row)[k];
+    if (v !== undefined) out[col] = v;
   }
   return out;
 }
 
-function seedLogbook(): LogbookEntry[] {
-  const today = new Date().toISOString().slice(0, 10);
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  const yesterday = y.toISOString().slice(0, 10);
-  return [
-    {
-      id: `${today}|T1`,
-      date: today,
-      shiftId: "T1",
-      notes: "Atraso de carretas na portaria entre 07h e 08h por fila de conferência fiscal.",
-      updatedAt: new Date().toISOString(),
-      authorName: "Marcos Ribeiro",
-    },
-    {
-      id: `${yesterday}|T2`,
-      date: yesterday,
-      shiftId: "T2",
-      notes: "Queda de sistema WMS por 35 minutos; docas 4 e 5 indisponíveis para manutenção.",
-      updatedAt: new Date().toISOString(),
-      authorName: "Juliana Prado",
-    },
-  ];
+function lbFromRow(r: Row): LogbookEntry {
+  return {
+    id: `${r.date}|${r.shift_id}`,
+    date: r.date,
+    shiftId: r.shift_id,
+    notes: r.notes,
+    updatedAt: r.updated_at,
+    authorName: r.author_name ?? "",
+  };
 }
 
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw) return JSON.parse(raw) as T;
-  } catch {
-    /* ignore */
-  }
-  return fallback;
-}
-
-function write(key: string, value: unknown) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* ignore */
-  }
+export function friendlyDbError(msg?: string): string {
+  if (!msg) return "Erro ao comunicar com o banco de dados.";
+  if (msg.includes("discharge_unique_asn")) return "ASN duplicado: este número já foi lançado.";
+  if (msg.includes("client_request_id")) return "Este lançamento já foi enviado.";
+  if (msg.includes("row-level security") || msg.includes("permission"))
+    return "Você não tem permissão para esta operação.";
+  if (msg.includes("Failed to fetch")) return "Sem conexão com o banco. Nada foi salvo.";
+  return msg;
 }
 
 interface StoreCtx {
   ready: boolean;
+  authReady: boolean;
+  user: User | null;
+  profile: Profile | null;
+  can: { write: boolean; admin: boolean };
+  /** Registros ativos (exclui cancelados) — base de KPIs e gráficos. */
   records: DischargeRecord[];
+  /** Todos os registros, incluindo cancelados — para o Histórico. */
+  allRecords: DischargeRecord[];
   logbook: LogbookEntry[];
   settings: Settings;
   session: Session;
-  saveRecord: (r: Omit<DischargeRecord, "id" | "createdAt"> & { id?: string }) => void;
-  deleteRecord: (id: string) => void;
+  saveRecord: (
+    r: Omit<DischargeRecord, "id" | "createdAt"> & { id?: string; clientRequestId?: string },
+  ) => Promise<void>;
+  deleteRecord: (id: string) => Promise<void>;
+  setRecordStatus: (id: string, status: RecordStatus) => Promise<void>;
   saveLogbook: (date: string, shiftId: ShiftId, notes: string) => void;
   getLogbook: (date: string, shiftId: ShiftId) => LogbookEntry | undefined;
-  updateSettings: (patch: Partial<Settings>) => void;
+  updateSettings: (patch: Partial<Settings>) => Promise<void>;
   updateSession: (patch: Partial<Session>) => void;
+  refresh: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
 
-const DEFAULT_SESSION: Session = { operatorName: "Marcos Ribeiro", shiftId: "T1" };
-
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const [authReady, setAuthReady] = useState(false);
   const [ready, setReady] = useState(false);
-  const [records, setRecords] = useState<DischargeRecord[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [allRecords, setAll] = useState<DischargeRecord[]>([]);
   const [logbook, setLogbook] = useState<LogbookEntry[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [session, setSession] = useState<Session>(DEFAULT_SESSION);
+  const [shiftId, setShiftId] = useState<ShiftId>("T1");
+  const lbTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
-    let recs = read<DischargeRecord[] | null>(K_RECORDS, null);
-    if (!recs || recs.length === 0) {
-      recs = seedRecords();
-      write(K_RECORDS, recs);
-    }
-    let lb = read<LogbookEntry[] | null>(K_LOGBOOK, null);
-    if (!lb) {
-      lb = seedLogbook();
-      write(K_LOGBOOK, lb);
-    }
-    setRecords(recs);
-    setLogbook(lb);
-    setSettings({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(K_SETTINGS, {}) });
-    setSession({ ...DEFAULT_SESSION, ...read<Partial<Session>>(K_SESSION, {}) });
-    setReady(true);
+    try {
+      const s = localStorage.getItem(K_SHIFT);
+      if (s === "T1" || s === "T2" || s === "T3") setShiftId(s);
+    } catch { /* ignore */ }
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+      setAuthReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        setUser(sess?.user ?? null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const persistRecords = useCallback((next: DischargeRecord[]) => {
-    setRecords(next);
-    write(K_RECORDS, next);
+  const loadAll = useCallback(async () => {
+    const recs: Row[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from("discharge_records")
+        .select("*")
+        .order("date", { ascending: false })
+        .range(from, from + 999);
+      if (error) break;
+      recs.push(...(data ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    setAll(recs.map(fromRow));
+    const { data: lb } = await supabase.from("logbook_entries").select("*").order("date", { ascending: false });
+    setLogbook((lb ?? []).map(lbFromRow));
+    const { data: st } = await supabase.from("app_settings").select("*").eq("id", 1).maybeSingle();
+    if (st)
+      setSettings({
+        goals: { INTERNO: st.goal_interno, EXTERNO: st.goal_externo },
+        emailTo: st.email_to,
+        emailCc: st.email_cc,
+      });
   }, []);
 
-  const value = useMemo<StoreCtx>(
-    () => ({
+  // Carrega perfil + dados quando há usuário; assina Realtime.
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setAll([]);
+      setLogbook([]);
+      setReady(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const [{ data: p }, { data: r }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+      ]);
+      if (cancelled) return;
+      if (!p || p.status !== "ATIVO") {
+        await supabase.auth.signOut();
+        return;
+      }
+      const roles = (r ?? []).map((x) => x.role as AppRole);
+      const role: AppRole = roles.includes("ADMINISTRADOR")
+        ? "ADMINISTRADOR"
+        : roles.includes("OPERACIONAL")
+          ? "OPERACIONAL"
+          : "VISUALIZADOR";
+      setProfile({ id: p.id, fullName: p.full_name, username: p.username, status: p.status, role });
+      await loadAll();
+      if (!cancelled) setReady(true);
+    })();
+
+    const channel = supabase
+      .channel("inbound-shared")
+      .on("postgres_changes", { event: "*", schema: "public", table: "discharge_records" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          const id = (payload.old as Row).id;
+          setAll((prev) => prev.filter((x) => x.id !== id));
+        } else {
+          const rec = fromRow(payload.new as Row);
+          setAll((prev) => {
+            const i = prev.findIndex((x) => x.id === rec.id);
+            if (i === -1) return [rec, ...prev];
+            const next = prev.slice();
+            next[i] = rec;
+            return next;
+          });
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "logbook_entries" }, (payload) => {
+        if (payload.eventType === "DELETE") return;
+        const e = lbFromRow(payload.new as Row);
+        setLogbook((prev) => [e, ...prev.filter((l) => l.id !== e.id)]);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "app_settings" }, (payload) => {
+        const st = payload.new as Row;
+        setSettings({
+          goals: { INTERNO: st.goal_interno, EXTERNO: st.goal_externo },
+          emailTo: st.email_to,
+          emailCc: st.email_cc,
+        });
+      })
+      .subscribe();
+
+    // Rede de segurança: recarrega ao voltar o foco da janela.
+    const onFocus = () => void loadAll();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [user, loadAll]);
+
+  const upsertLocal = (rec: DischargeRecord) =>
+    setAll((prev) => {
+      const i = prev.findIndex((x) => x.id === rec.id);
+      if (i === -1) return [rec, ...prev];
+      const next = prev.slice();
+      next[i] = rec;
+      return next;
+    });
+
+  const value = useMemo<StoreCtx>(() => {
+    const role = profile?.role;
+    return {
       ready,
-      records,
+      authReady,
+      user,
+      profile,
+      can: { write: role === "ADMINISTRADOR" || role === "OPERACIONAL", admin: role === "ADMINISTRADOR" },
+      records: allRecords.filter((r) => r.status !== "CANCELADO"),
+      allRecords,
       logbook,
       settings,
-      session,
-      saveRecord: (r) => {
-        if (r.id) {
-          persistRecords(
-            records.map((x) => (x.id === r.id ? ({ ...x, ...r, id: r.id } as DischargeRecord) : x)),
-          );
+      session: { operatorName: profile?.fullName ?? "", shiftId },
+      saveRecord: async (r) => {
+        const { id, clientRequestId, ...rest } = r;
+        if (id) {
+          const current = allRecords.find((x) => x.id === id);
+          const { data, error } = await supabase
+            .from("discharge_records")
+            .update(toRow({ ...rest, version: current?.version ?? r.version }))
+            .eq("id", id)
+            .select()
+            .single();
+          if (error) throw new Error(friendlyDbError(error.message));
+          upsertLocal(fromRow(data));
         } else {
-          const novo: DischargeRecord = {
-            ...r,
-            id: uid(),
-            createdAt: new Date().toISOString(),
-            createdBy: r.createdBy ?? session.operatorName,
-          };
-          persistRecords([novo, ...records]);
+          const row = toRow(rest);
+          delete row.status;
+          delete row.version;
+          const { data, error } = await supabase
+            .from("discharge_records")
+            .insert({ ...row, client_request_id: clientRequestId, created_by: user?.id } as any)
+            .select()
+            .single();
+          if (error) throw new Error(friendlyDbError(error.message));
+          upsertLocal(fromRow(data));
         }
       },
-      deleteRecord: (id) => persistRecords(records.filter((x) => x.id !== id)),
-      saveLogbook: (date, shiftId, notes) => {
-        const id = `${date}|${shiftId}`;
-        const entry: LogbookEntry = {
-          id,
-          date,
-          shiftId,
-          notes,
-          updatedAt: new Date().toISOString(),
-          authorName: session.operatorName,
-        };
-        const next = logbook.some((l) => l.id === id)
-          ? logbook.map((l) => (l.id === id ? entry : l))
-          : [entry, ...logbook];
-        setLogbook(next);
-        write(K_LOGBOOK, next);
+      deleteRecord: async (id) => {
+        const { error, count } = await supabase
+          .from("discharge_records")
+          .delete({ count: "exact" })
+          .eq("id", id);
+        if (error) throw new Error(friendlyDbError(error.message));
+        if (!count) throw new Error("Você não tem permissão para excluir registros.");
+        setAll((prev) => prev.filter((x) => x.id !== id));
       },
-      getLogbook: (date, shiftId) => logbook.find((l) => l.id === `${date}|${shiftId}`),
-      updateSettings: (patch) => {
+      setRecordStatus: async (id, status) => {
+        const current = allRecords.find((x) => x.id === id);
+        const { data, error } = await supabase
+          .from("discharge_records")
+          .update({ status, version: current?.version ?? 1 })
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw new Error(friendlyDbError(error.message));
+        upsertLocal(fromRow(data));
+      },
+      saveLogbook: (date, sid, notes) => {
+        const key = `${date}|${sid}`;
+        setLogbook((prev) => {
+          const entry: LogbookEntry = {
+            id: key, date, shiftId: sid, notes,
+            updatedAt: new Date().toISOString(),
+            authorName: profile?.fullName ?? "",
+          };
+          return [entry, ...prev.filter((l) => l.id !== key)];
+        });
+        clearTimeout(lbTimers.current[key]);
+        lbTimers.current[key] = setTimeout(async () => {
+          const { error } = await supabase
+            .from("logbook_entries")
+            .upsert({ date, shift_id: sid, notes }, { onConflict: "date,shift_id" });
+          if (error) {
+            const { toast } = await import("sonner");
+            toast.error(`Diário de Bordo não salvo: ${friendlyDbError(error.message)}`);
+          }
+        }, 700);
+      },
+      getLogbook: (date, sid) => logbook.find((l) => l.id === `${date}|${sid}`),
+      updateSettings: async (patch) => {
         const next = { ...settings, ...patch };
+        const { error } = await supabase
+          .from("app_settings")
+          .update({
+            goal_interno: next.goals.INTERNO,
+            goal_externo: next.goals.EXTERNO,
+            email_to: next.emailTo,
+            email_cc: next.emailCc,
+            updated_at: new Date().toISOString(),
+            updated_by: user?.id,
+          })
+          .eq("id", 1)
+          .select()
+          .single();
+        if (error) throw new Error(friendlyDbError(error.message));
         setSettings(next);
-        write(K_SETTINGS, next);
       },
       updateSession: (patch) => {
-        const next = { ...session, ...patch };
-        setSession(next);
-        write(K_SESSION, next);
+        if (patch.shiftId) {
+          setShiftId(patch.shiftId);
+          try { localStorage.setItem(K_SHIFT, patch.shiftId); } catch { /* ignore */ }
+        }
       },
-    }),
-    [ready, records, logbook, settings, session, persistRecords],
-  );
+      refresh: loadAll,
+      signOut: async () => {
+        await supabase.auth.signOut();
+      },
+    };
+  }, [ready, authReady, user, profile, allRecords, logbook, settings, shiftId, loadAll]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
