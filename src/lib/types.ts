@@ -47,7 +47,14 @@ export interface DischargeRecord {
 
   createdAt: string;
   createdBy?: string;
+  createdById?: string;
+  status?: RecordStatus;
+  version?: number;
+  updatedAt?: string;
+  updatedByName?: string;
 }
+
+export type RecordStatus = "PENDENTE" | "VALIDADO" | "CANCELADO";
 
 export interface LogbookEntry {
   id: string;
