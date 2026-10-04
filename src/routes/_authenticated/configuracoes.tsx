@@ -21,7 +21,7 @@ import {
   type ShiftId,
 } from "@/lib/types";
 
-export const Route = createFileRoute("/configuracoes")({
+export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({
     meta: [
       { title: "Configurações e Metas | Softys × Kuehne+Nagel" },

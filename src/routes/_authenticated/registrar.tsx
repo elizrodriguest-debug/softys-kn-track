@@ -29,7 +29,7 @@ import {
 import { shiftLabel } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/registrar")({
+export const Route = createFileRoute("/_authenticated/registrar")({
   head: () => ({
     meta: [
       { title: "Registrar Descarga | Softys × Kuehne+Nagel" },
