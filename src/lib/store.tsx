@@ -42,7 +42,8 @@ const DEFAULT_SETTINGS: Settings = {
   emailCc: "",
 };
 
-type Row = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = any;
 
 function fromRow(r: Row): DischargeRecord {
   return {
@@ -311,7 +312,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const current = allRecords.find((x) => x.id === id);
           const { data, error } = await supabase
             .from("discharge_records")
-            .update(toRow({ ...rest, version: current?.version ?? r.version }))
+            .update(toRow({ ...rest, version: current?.version ?? r.version ?? 1 }))
             .eq("id", id)
             .select()
             .single();
@@ -382,7 +383,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             email_to: next.emailTo,
             email_cc: next.emailCc,
             updated_at: new Date().toISOString(),
-            updated_by: user?.id,
+            updated_by: user?.id ?? null,
           })
           .eq("id", 1)
           .select()

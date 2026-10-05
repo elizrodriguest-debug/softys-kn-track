@@ -47,7 +47,14 @@ export function ShiftClosureModal({
   records: DischargeRecord[];
   goal: number;
 }) {
-  const { settings, updateSettings, getLogbook, saveLogbook, session } = useStore();
+  const { settings, updateSettings, getLogbook, saveLogbook, session, can } = useStore();
+  const [emailTo, setEmailTo] = useState(settings.emailTo);
+  const [emailCc, setEmailCc] = useState(settings.emailCc);
+  const persistEmails = () => {
+    if (!can.admin) return;
+    if (emailTo === settings.emailTo && emailCc === settings.emailCc) return;
+    updateSettings({ emailTo, emailCc }).catch(() => {});
+  };
   const [copied, setCopied] = useState(false);
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
 
@@ -130,16 +137,16 @@ export function ShiftClosureModal({
 
   const gmail = () => {
     const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-      settings.emailTo,
-    )}&cc=${encodeURIComponent(settings.emailCc)}&su=${encodeURIComponent(
+      emailTo,
+    )}&cc=${encodeURIComponent(emailCc)}&su=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
     window.open(url, "_blank", "noopener");
   };
 
   const mailto = () => {
-    window.location.href = `mailto:${encodeURIComponent(settings.emailTo)}?cc=${encodeURIComponent(
-      settings.emailCc,
+    window.location.href = `mailto:${encodeURIComponent(emailTo)}?cc=${encodeURIComponent(
+      emailCc,
     )}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
@@ -247,15 +254,17 @@ export function ShiftClosureModal({
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Para</label>
               <Input
-                value={settings.emailTo}
-                onChange={(e) => updateSettings({ emailTo: e.target.value })}
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                onBlur={persistEmails}
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Cc</label>
               <Input
-                value={settings.emailCc}
-                onChange={(e) => updateSettings({ emailCc: e.target.value })}
+                value={emailCc}
+                onChange={(e) => setEmailCc(e.target.value)}
+                onBlur={persistEmails}
               />
             </div>
             <div className="space-y-1.5">

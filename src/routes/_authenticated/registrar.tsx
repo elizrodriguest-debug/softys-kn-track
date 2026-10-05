@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Save, Truck } from "lucide-react";
+import { Loader2, Save, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,9 @@ function NumField({
 const num = (v: string) => Math.max(0, Number(v) || 0);
 
 function RegistrarPage() {
-  const { saveRecord, session, records } = useStore();
+  const { saveRecord, session, records, can } = useStore();
+  const [saving, setSaving] = useState(false);
+  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const router = useRouter();
 
   const [division, setDivision] = useState<DivisionType>("INTERNO");
@@ -126,7 +128,16 @@ function RegistrarPage() {
     );
   }, [asnNumber, division, records]);
 
-  const submit = () => {
+  const submit = async () => {
+    if (saving) return;
+    if (!can.write) {
+      toast.error("Seu perfil não permite realizar lançamentos.");
+      return;
+    }
+    if (!date || !time) {
+      toast.error("Informe data e horário.");
+      return;
+    }
     if (asnDuplicado) {
       toast.error(`ASN duplicado: o número ${asnNumber.trim()} já foi lançado.`);
       return;
@@ -174,9 +185,17 @@ function RegistrarPage() {
             entryDivergenceDetails,
           };
 
-    saveRecord(record);
-    toast.success("Descarga registrada com sucesso.");
-    router.navigate({ to: "/historico" });
+    setSaving(true);
+    try {
+      await saveRecord({ ...record, clientRequestId: requestId });
+      toast.success("Carga lançada com sucesso.");
+      setRequestId(crypto.randomUUID());
+      router.navigate({ to: "/historico" });
+    } catch (e) {
+      toast.error(`Carga NÃO foi salva: ${(e as Error).message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -366,9 +385,9 @@ function RegistrarPage() {
             </div>
           )}
 
-          <Button className="mt-5 w-full sm:w-auto" onClick={submit}>
-            <Save className="mr-2 h-4 w-4" />
-            Salvar descarga
+          <Button className="mt-5 w-full sm:w-auto" onClick={submit} disabled={saving || !can.write}>
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {saving ? "Salvando no banco..." : "Salvar descarga"}
           </Button>
         </section>
       </div>

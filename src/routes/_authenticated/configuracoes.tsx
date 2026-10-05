@@ -68,7 +68,7 @@ function Section({
 }
 
 function ConfiguracoesPage() {
-  const { settings, session, updateSettings, updateSession } = useStore();
+  const { settings, session, updateSettings, updateSession, can } = useStore();
 
   const [interno, setInterno] = useState(String(settings.goals.INTERNO));
   const [externo, setExterno] = useState(String(settings.goals.EXTERNO));
@@ -76,24 +76,33 @@ function ConfiguracoesPage() {
   const [emailCc, setEmailCc] = useState(settings.emailCc);
   const [operador, setOperador] = useState(session.operatorName);
 
-  const salvarMetas = () => {
-    updateSettings({
+  const salvarMetas = async () => {
+    if (!can.admin) { toast.error("Somente administradores alteram metas."); return; }
+    try {
+      await updateSettings({
       goals: {
         INTERNO: Math.max(0, Number(interno) || 0),
         EXTERNO: Math.max(0, Number(externo) || 0),
       },
     });
-    toast.success("Metas por turno atualizadas.");
+      toast.success("Metas por turno atualizadas.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
-  const salvarEmail = () => {
-    updateSettings({ emailTo, emailCc });
-    toast.success("Destinatários do fechamento salvos.");
+  const salvarEmail = async () => {
+    if (!can.admin) { toast.error("Somente administradores alteram destinatários."); return; }
+    try {
+      await updateSettings({ emailTo, emailCc });
+      toast.success("Destinatários do fechamento salvos.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   const salvarSessao = () => {
-    updateSession({ operatorName: operador });
-    toast.success("Sessão atualizada.");
+    toast.info("O nome do operador vem do cadastro de usuário (Administração).");
   };
 
   return (
@@ -175,7 +184,7 @@ function ConfiguracoesPage() {
           <div className="space-y-4">
             <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted-foreground">Operador</label>
-              <Input value={operador} onChange={(e) => setOperador(e.target.value)} />
+              <Input value={operador} disabled />
             </div>
             <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted-foreground">Turno</label>
