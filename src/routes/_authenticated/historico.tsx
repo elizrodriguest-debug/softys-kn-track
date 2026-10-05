@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Ban, CheckCircle2, Download, Pencil, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import type { DischargeRecord, RecordStatus } from "@/lib/types";
+import { shiftFromTime, type DischargeRecord, type RecordStatus } from "@/lib/types";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ function HistoricoPage() {
     if (!editing) return;
     setBusy(true);
     try {
-      await saveRecord({ ...editing });
+      await saveRecord({ ...editing, shiftId: shiftFromTime(editing.time) });
       toast.success("Lançamento atualizado no banco.");
       setEditing(null);
     } catch (e) {
