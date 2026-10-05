@@ -184,7 +184,7 @@ function ConfiguracoesPage() {
           <div className="space-y-4">
             <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted-foreground">Operador</label>
-              <Input value={operador} onChange={(e) => setOperador(e.target.value)} />
+              <Input value={operador} disabled />
             </div>
             <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted-foreground">Turno</label>
