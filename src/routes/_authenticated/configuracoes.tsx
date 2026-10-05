@@ -77,7 +77,7 @@ function ConfiguracoesPage() {
   const [operador, setOperador] = useState(session.operatorName);
 
   const salvarMetas = async () => {
-    if (!can.admin) return toast.error("Somente administradores alteram metas.");
+    if (!can.admin) { toast.error("Somente administradores alteram metas."); return; }
     try {
       await updateSettings({
       goals: {
@@ -92,7 +92,7 @@ function ConfiguracoesPage() {
   };
 
   const salvarEmail = async () => {
-    if (!can.admin) return toast.error("Somente administradores alteram destinatários.");
+    if (!can.admin) { toast.error("Somente administradores alteram destinatários."); return; }
     try {
       await updateSettings({ emailTo, emailCc });
       toast.success("Destinatários do fechamento salvos.");
