@@ -1,11 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { BarChart3, ClipboardList, FileSpreadsheet, Menu, Settings, Truck, UserCog, X } from "lucide-react";
+import { BarChart3, ClipboardList, FileSpreadsheet, Loader2, LogOut, Menu, Settings, ShieldCheck, Truck, UserCog, X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 import { SHIFTS, type ShiftId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BrandMarks } from "@/components/BrandMarks";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,10 +23,28 @@ const NAV = [
   { to: "/historico", label: "Histórico / Consultas", icon: ClipboardList },
   { to: "/relatorio-mensal", label: "Relatório Mensal", icon: FileSpreadsheet },
   { to: "/configuracoes", label: "Configurações / Metas", icon: Settings },
+  { to: "/admin", label: "Administração", icon: ShieldCheck },
 ] as const;
 
+function useNav() {
+  const { can } = useStore();
+  return NAV.filter((n) => {
+    if (n.to === "/registrar") return can.write;
+    if (n.to === "/configuracoes" || n.to === "/admin") return can.admin;
+    return true;
+  });
+}
+
 function SessionControl() {
-  const { session, updateSession } = useStore();
+  const { session, updateSession, profile, signOut } = useStore();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const sair = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await signOut();
+    navigate({ to: "/auth", replace: true });
+  };
   return (
     <Popover>
       <PopoverTrigger className="flex items-center gap-2 rounded-lg border border-brand-foreground/20 px-3 py-1.5 text-left transition-colors hover:bg-brand-foreground/10">
@@ -43,12 +63,9 @@ function SessionControl() {
           <p className="text-sm font-semibold">Sessão ativa</p>
           <p className="text-xs text-muted-foreground">Operador e turno em operação.</p>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Operador</label>
-          <Input
-            value={session.operatorName}
-            onChange={(e) => updateSession({ operatorName: e.target.value })}
-          />
+        <div className="rounded-lg bg-muted p-2 text-xs">
+          <p className="font-semibold">{profile?.fullName}</p>
+          <p className="text-muted-foreground">@{profile?.username} · {profile?.role}</p>
         </div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">Turno</label>
@@ -68,6 +85,9 @@ function SessionControl() {
             </SelectContent>
           </Select>
         </div>
+        <Button variant="outline" className="w-full" onClick={sair}>
+          <LogOut className="mr-2 h-4 w-4" /> Sair
+        </Button>
       </PopoverContent>
     </Popover>
   );
@@ -84,6 +104,8 @@ export function AppShell({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const nav = useNav();
+  const { ready } = useStore();
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,7 +140,7 @@ export function AppShell({
 
         <nav className="hidden border-t border-brand-foreground/10 lg:block">
           <div className="mx-auto flex max-w-[1600px] gap-1 px-4 sm:px-6">
-            {NAV.map((n) => (
+            {nav.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
@@ -139,7 +161,7 @@ export function AppShell({
         {open && (
           <div className="border-t border-brand-foreground/10 px-4 pb-4 lg:hidden">
             <div className="flex flex-col gap-1 py-2">
-              {NAV.map((n) => (
+              {nav.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}
@@ -170,7 +192,14 @@ export function AppShell({
           </h1>
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
-        {children}
+        {ready ? (
+          children
+        ) : (
+          <div className="grid place-items-center py-24 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <p className="mt-2 text-sm">Carregando dados do banco central...</p>
+          </div>
+        )}
       </main>
     </div>
   );
