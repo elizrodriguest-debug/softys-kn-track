@@ -21,6 +21,8 @@ export type Database = {
           goal_externo: number
           goal_interno: number
           id: number
+          planned_externo: number
+          planned_interno: number
           updated_at: string
           updated_by: string | null
         }
@@ -30,6 +32,8 @@ export type Database = {
           goal_externo?: number
           goal_interno?: number
           id?: number
+          planned_externo?: number
+          planned_interno?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -39,6 +43,8 @@ export type Database = {
           goal_externo?: number
           goal_interno?: number
           id?: number
+          planned_externo?: number
+          planned_interno?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -269,6 +275,60 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
           username?: string
+        }
+        Relationships: []
+      }
+      resource_hours: {
+        Row: {
+          actual: number | null
+          created_at: string
+          created_by: string | null
+          date: string
+          division: string
+          hour: string
+          id: string
+          notes: string | null
+          planned: number
+          productivity: number | null
+          shift_id: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+          volume: number
+        }
+        Insert: {
+          actual?: number | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          division: string
+          hour: string
+          id?: string
+          notes?: string | null
+          planned?: number
+          productivity?: number | null
+          shift_id: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          volume?: number
+        }
+        Update: {
+          actual?: number | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          division?: string
+          hour?: string
+          id?: string
+          notes?: string | null
+          planned?: number
+          productivity?: number | null
+          shift_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          volume?: number
         }
         Relationships: []
       }
