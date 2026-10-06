@@ -21,6 +21,8 @@ export interface Settings {
   goals: Record<DivisionType, number>;
   emailTo: string;
   emailCc: string;
+  /** Recursos planejados por hora (configuráveis pelo Administrador). */
+  planned: Record<DivisionType, number>;
 }
 
 export interface Session {
@@ -40,6 +42,7 @@ const DEFAULT_SETTINGS: Settings = {
   goals: { ...DEFAULT_GOALS },
   emailTo: "",
   emailCc: "",
+  planned: { INTERNO: 4, EXTERNO: 10 },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -208,6 +211,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         goals: { INTERNO: st.goal_interno, EXTERNO: st.goal_externo },
         emailTo: st.email_to,
         emailCc: st.email_cc,
+        planned: { INTERNO: (st as Row).planned_interno ?? 4, EXTERNO: (st as Row).planned_externo ?? 10 },
       });
   }, []);
 
@@ -270,6 +274,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           goals: { INTERNO: st.goal_interno, EXTERNO: st.goal_externo },
           emailTo: st.email_to,
           emailCc: st.email_cc,
+          planned: { INTERNO: st.planned_interno ?? 4, EXTERNO: st.planned_externo ?? 10 },
         });
       })
       .subscribe();
@@ -382,6 +387,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             goal_externo: next.goals.EXTERNO,
             email_to: next.emailTo,
             email_cc: next.emailCc,
+            planned_interno: next.planned.INTERNO,
+            planned_externo: next.planned.EXTERNO,
             updated_at: new Date().toISOString(),
             updated_by: user?.id ?? null,
           })
