@@ -1,3 +1,4 @@
+import { ResourceHoursPanel } from "@/components/ResourceHoursPanel";
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import {
@@ -316,6 +317,8 @@ export function Dashboard() {
           )}
         </div>
       </div>
+
+      <ResourceHoursPanel date={closureDate} shiftId={closureShift} />
 
       {/* Diário de Bordo */}
       <div className="card-surface p-5 no-print">
