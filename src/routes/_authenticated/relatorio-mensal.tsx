@@ -1,3 +1,4 @@
+import { ResourceMonthlyPanel } from "@/components/ResourceMonthlyPanel";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
@@ -472,6 +473,8 @@ function RelatorioMensalPage() {
           color={COLORS.tissue}
         />
       </div>
+
+      <ResourceMonthlyPanel ano={ano} mes={mes} />
 
       <section id="detalhamento" className="mt-5 scroll-mt-28">
         <h2 className="mb-3 font-display text-base font-semibold">Detalhamento operacional</h2>

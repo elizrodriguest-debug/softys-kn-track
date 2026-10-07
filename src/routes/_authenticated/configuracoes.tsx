@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Save, Target, Mail, UserCog } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Save, Target, Mail, UserCog, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,51 @@ function ConfiguracoesPage() {
   const [externo, setExterno] = useState(String(settings.goals.EXTERNO));
   const [emailTo, setEmailTo] = useState(settings.emailTo);
   const [emailCc, setEmailCc] = useState(settings.emailCc);
-  const [operador, setOperador] = useState(session.operatorName);
+  const [operador] = useState(session.operatorName);
+  const [planInt, setPlanInt] = useState(String(settings.planned.INTERNO));
+  const [planExt, setPlanExt] = useState(String(settings.planned.EXTERNO));
+  useEffect(() => {
+    setPlanInt(String(settings.planned.INTERNO));
+    setPlanExt(String(settings.planned.EXTERNO));
+  }, [settings.planned.INTERNO, settings.planned.EXTERNO]);
+  type Hist = { at: string; by: string; op: string; from: number; to: number };
+  const [hist, setHist] = useState<Hist[]>([]);
+  const loadHist = async () => {
+    if (!can.admin) return;
+    const { data } = await supabase
+      .from("audit_log")
+      .select("created_at, changed_by_name, old_data, new_data")
+      .eq("table_name", "app_settings")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const out: Hist[] = [];
+    for (const r of data ?? []) {
+      const o = (r.old_data ?? {}) as Record<string, number>;
+      const n = (r.new_data ?? {}) as Record<string, number>;
+      for (const [col, op] of [["planned_interno", "Recebimento Interno"], ["planned_externo", "Recebimento Externo"]] as const) {
+        if (o[col] !== undefined && n[col] !== undefined && o[col] !== n[col])
+          out.push({ at: r.created_at, by: r.changed_by_name ?? "—", op, from: o[col]!, to: n[col]! });
+      }
+    }
+    setHist(out);
+  };
+  useEffect(() => { loadHist(); }, [can.admin]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const salvarRecursos = async () => {
+    if (!can.admin) { toast.error("Somente administradores alteram recursos planejados."); return; }
+    try {
+      await updateSettings({
+        planned: {
+          INTERNO: Math.max(0, Math.floor(Number(planInt) || 0)),
+          EXTERNO: Math.max(0, Math.floor(Number(planExt) || 0)),
+        },
+      });
+      toast.success("Recursos planejados salvos.");
+      loadHist();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const salvarMetas = async () => {
     if (!can.admin) { toast.error("Somente administradores alteram metas."); return; }
@@ -152,6 +197,55 @@ function ConfiguracoesPage() {
               <Save className="mr-2 h-4 w-4" />
               Salvar metas
             </Button>
+          </div>
+        </Section>
+
+        <Section
+          icon={Users}
+          title="Recursos planejados"
+          description="Recursos por hora usados no acompanhamento. Alterações valem a partir de agora; horas já lançadas mantêm o valor da época."
+        >
+          <div className="space-y-4">
+            {([["Recebimento Interno", planInt, setPlanInt], ["Recebimento Externo", planExt, setPlanExt]] as const).map(([l, v, set]) => (
+              <div key={l} className="flex items-center gap-3">
+                <label className="w-44 text-sm font-medium text-foreground">{l}</label>
+                <Input type="number" min={0} className="w-24" disabled={!can.admin} value={v} onChange={(e) => set(e.target.value)} />
+                <span className="text-sm text-muted-foreground">recursos</span>
+              </div>
+            ))}
+            {can.admin && (
+              <Button onClick={salvarRecursos} className="w-full sm:w-auto">
+                <Save className="mr-2 h-4 w-4" />
+                Salvar configuração
+              </Button>
+            )}
+            {can.admin && (
+              <div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">Histórico de alterações</div>
+                {hist.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">Nenhuma alteração registrada.</p>
+                ) : (
+                  <div className="max-h-56 overflow-auto rounded-lg border border-border">
+                    <table className="w-full text-[11px]">
+                      <thead className="bg-muted/60 text-muted-foreground">
+                        <tr><th className="px-2 py-1 text-left">Data/hora</th><th className="px-2 py-1 text-left">Usuário</th><th className="px-2 py-1 text-left">Operação</th><th className="px-2 py-1 text-right">Anterior</th><th className="px-2 py-1 text-right">Novo</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {hist.map((h, i) => (
+                          <tr key={i}>
+                            <td className="px-2 py-1">{new Date(h.at).toLocaleString("pt-BR")}</td>
+                            <td className="px-2 py-1">{h.by}</td>
+                            <td className="px-2 py-1">{h.op}</td>
+                            <td className="px-2 py-1 text-right tabular-nums">{h.from}</td>
+                            <td className="px-2 py-1 text-right tabular-nums">{h.to}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Section>
 
