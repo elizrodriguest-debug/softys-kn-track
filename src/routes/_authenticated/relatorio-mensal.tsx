@@ -5,6 +5,7 @@ import {
   Bar,
   CartesianGrid,
   ComposedChart,
+  LabelList,
   Legend,
   Line,
   ResponsiveContainer,
@@ -116,13 +117,23 @@ function DailyGoalChart({
       <p className="mt-1 text-xs text-muted-foreground">{title}</p>
       <div className="mt-4 h-[320px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data}>
+          <ComposedChart data={data} margin={{ top: 22, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip />
             <Legend />
-            <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} />
+            <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} minPointSize={2}>
+              <LabelList
+                dataKey={dataKey}
+                position="top"
+                offset={4}
+                fontSize={10}
+                fontWeight={700}
+                fill="var(--color-foreground)"
+                formatter={(v: number) => (Number(v) > 0 ? Math.round(Number(v)) : "")}
+              />
+            </Bar>
             <Line
               type="linear"
               dataKey={goalKey}
