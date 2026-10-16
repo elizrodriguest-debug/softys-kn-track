@@ -16,6 +16,8 @@ export interface DischargeRecord {
   date: string; // Formato YYYY-MM-DD
   time: string; // Formato HH:mm
   shiftId: ShiftId;
+  /** Data operacional (início do turno), derivada de date+time+shiftId. */
+  opDate: string;
   dockNumber?: string;
   carrierName?: string;
   licensePlate?: string;
@@ -68,9 +70,9 @@ export interface LogbookEntry {
 /* ---------- Constantes operacionais ---------- */
 
 export const SHIFTS: { id: ShiftId; label: string; range: string; start: string; end: string }[] = [
-  { id: "T1", label: "Turno 1", range: "06:00 às 14:20", start: "06:00", end: "14:20" },
-  { id: "T2", label: "Turno 2", range: "14:20 às 22:35", start: "14:20", end: "22:35" },
-  { id: "T3", label: "Turno 3", range: "22:35 às 06:00", start: "22:35", end: "06:00" },
+  { id: "T1", label: "Turno 1", range: "06:00 às 14:00 (briefing 06:00–06:15)", start: "06:00", end: "14:00" },
+  { id: "T2", label: "Turno 2", range: "14:00 às 22:00 (briefing 14:00–14:15)", start: "14:00", end: "22:00" },
+  { id: "T3", label: "Turno 3", range: "22:00 às 06:00 (briefing 22:00–22:15)", start: "22:00", end: "06:00" },
 ];
 
 export const FACTORIES: FactoryType[] = ["Tissue", "Personal"];
@@ -107,9 +109,17 @@ export const FACTORY_COLORS: Record<FactoryType, string> = {
 export function shiftFromTime(time: string): ShiftId {
   const [h = 0, m = 0] = time.split(":").map(Number);
   const mins = (h ?? 0) * 60 + (m ?? 0);
-  if (mins >= 6 * 60 && mins < 14 * 60 + 20) return "T1";
-  if (mins >= 14 * 60 + 20 && mins < 22 * 60 + 35) return "T2";
+  if (mins >= 6 * 60 && mins < 14 * 60) return "T1";
+  if (mins >= 14 * 60 && mins < 22 * 60) return "T2";
   return "T3";
+}
+
+/** Data operacional = data de início do turno. T3 entre 00:00 e 06:00 pertence ao dia anterior. */
+export function operationalDate(date: string, time: string, shiftId: ShiftId): string {
+  if (shiftId !== "T3" || time >= "06:00") return date;
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
 }
 
 export interface NonConformity {

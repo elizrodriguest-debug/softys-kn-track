@@ -100,8 +100,8 @@ function HistoricoPage() {
     const q = query.trim().toLowerCase();
     return records
       .filter((r) => r.division === division)
-      .filter((r) => (from ? r.date >= from : true))
-      .filter((r) => (to ? r.date <= to : true))
+      .filter((r) => (from ? r.opDate >= from : true))
+      .filter((r) => (to ? r.opDate <= to : true))
       .filter((r) => (shift === "TODOS" ? true : r.shiftId === shift))
       .filter((r) => (status === "TODOS" ? true : (r.status ?? "PENDENTE") === status))
       .filter((r) => (usuario === "TODOS" ? true : r.createdBy === usuario))

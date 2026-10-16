@@ -10,7 +10,7 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_GOALS, type DischargeRecord, type DivisionType, type LogbookEntry, type RecordStatus, type ShiftId } from "./types";
+import { DEFAULT_GOALS, operationalDate, type DischargeRecord, type DivisionType, type LogbookEntry, type RecordStatus, type ShiftId } from "./types";
 import type { AppRole } from "./auth-utils";
 
 /** Banco central (Lovable Cloud) é a fonte oficial dos dados.
@@ -55,6 +55,7 @@ function fromRow(r: Row): DischargeRecord {
     date: r.date,
     time: r.time,
     shiftId: r.shift_id,
+    opDate: operationalDate(r.date, r.time, r.shift_id),
     dockNumber: r.dock_number ?? undefined,
     carrierName: r.carrier_name ?? undefined,
     licensePlate: r.license_plate ?? undefined,

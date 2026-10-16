@@ -21,6 +21,8 @@ import {
   EXTERNAL_OPERATIONS,
   FACTORIES,
   shiftFromTime,
+  operationalDate,
+  formatDateBR,
   type DischargeRecord,
   type DivisionType,
   type ExternalOperationType,
@@ -154,7 +156,7 @@ function RegistrarPage() {
       createdBy: session.operatorName,
     };
 
-    const record: Omit<DischargeRecord, "id" | "createdAt"> =
+    const record: Omit<DischargeRecord, "id" | "createdAt" | "opDate"> =
       division === "INTERNO"
         ? {
             ...base,
@@ -231,6 +233,11 @@ function RegistrarPage() {
             </Field>
             <Field label={`Horário — turno identificado: ${shiftLabel(turno)}`}>
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              {date && time && (
+                <span className="text-[11px] text-muted-foreground">
+                  Dia operacional: {formatDateBR(operationalDate(date, time, turno))}
+                </span>
+              )}
             </Field>
             {division === "EXTERNO" && (
               <Field label="Doca">
