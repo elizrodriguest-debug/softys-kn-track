@@ -154,7 +154,7 @@ function RegistrarPage() {
       createdBy: session.operatorName,
     };
 
-    const record: Omit<DischargeRecord, "id" | "createdAt"> =
+    const record: Omit<DischargeRecord, "id" | "createdAt" | "opDate"> =
       division === "INTERNO"
         ? {
             ...base,

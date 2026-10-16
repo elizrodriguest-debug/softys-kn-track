@@ -116,7 +116,7 @@ export function shiftFromTime(time: string): ShiftId {
 
 /** Data operacional = data de início do turno. T3 entre 00:00 e 06:00 pertence ao dia anterior. */
 export function operationalDate(date: string, time: string, shiftId: ShiftId): string {
-  if (shiftId !== "T3" || time >= "06:00" || time >= "22:00") return date;
+  if (shiftId !== "T3" || time >= "06:00") return date;
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0, 10);

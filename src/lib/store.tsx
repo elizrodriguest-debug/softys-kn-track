@@ -10,7 +10,7 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_GOALS, type DischargeRecord, type DivisionType, type LogbookEntry, type RecordStatus, type ShiftId } from "./types";
+import { DEFAULT_GOALS, operationalDate, type DischargeRecord, type DivisionType, type LogbookEntry, type RecordStatus, type ShiftId } from "./types";
 import type { AppRole } from "./auth-utils";
 
 /** Banco central (Lovable Cloud) é a fonte oficial dos dados.
