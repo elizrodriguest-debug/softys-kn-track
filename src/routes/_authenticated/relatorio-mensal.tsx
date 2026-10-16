@@ -173,13 +173,23 @@ function MonthlyCumulativeChart({
       <p className="mt-1 text-xs text-muted-foreground">{title}</p>
       <div className="mt-4 h-[320px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={series}>
+          <ComposedChart data={series} margin={{ top: 22, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip />
             <Legend />
-            <Bar dataKey={dataKey} name="Descargas no mês" fill={color} radius={[4, 4, 0, 0]} />
+            <Bar dataKey={dataKey} name="Descargas no mês" fill={color} radius={[4, 4, 0, 0]} minPointSize={2}>
+              <LabelList
+                dataKey={dataKey}
+                position="top"
+                offset={4}
+                fontSize={10}
+                fontWeight={700}
+                fill="var(--color-foreground)"
+                formatter={(v: number) => (Number(v) > 0 ? Math.round(Number(v)) : "")}
+              />
+            </Bar>
             <Line
               type="monotone"
               dataKey="Acumulado"
