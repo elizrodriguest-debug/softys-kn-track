@@ -98,6 +98,24 @@ export function Dashboard() {
     return { filtered: base, days: dias, refDate: ref };
   }, [records, division, dateFilter, specificDate, shift]);
 
+  // Consolidação de volumes por divisão/tipo (mesmos filtros de data e turno, ambas as divisões)
+  const consol = useMemo(() => {
+    const today = isoToday();
+    let base = records;
+    if (dateFilter === "HOJE") base = base.filter((r) => r.opDate === today);
+    else if (dateFilter === "ONTEM") base = base.filter((r) => r.opDate === isoToday(1));
+    else if (dateFilter === "7D") base = base.filter((r) => r.opDate >= isoToday(6) && r.opDate <= today);
+    else if (dateFilter === "DIA") base = base.filter((r) => r.opDate === specificDate);
+    if (shift !== "GERAL") base = base.filter((r) => r.shiftId === shift);
+    const sum = (f: (r: (typeof base)[number]) => boolean) =>
+      base.filter(f).reduce((a, r) => a + recordVolumes(r), 0);
+    const int = FACTORIES.map((k) => [k, sum((r) => r.division === "INTERNO" && r.factoryType === k)] as const);
+    const ext = EXTERNAL_OPERATIONS.map((k) => [k, sum((r) => r.division === "EXTERNO" && r.operationType === k)] as const);
+    const ti = int.reduce((a, [, v]) => a + v, 0);
+    const te = ext.reduce((a, [, v]) => a + v, 0);
+    return { int, ext, ti, te };
+  }, [records, dateFilter, specificDate, shift]);
+
   const goalPerShift = settings.goals[division];
   const goal = goalPerShift * (shift === "GERAL" ? 3 : 1) * days;
   const kpis = useMemo(() => computeKpis(filtered, goal), [filtered, goal]);
@@ -316,6 +334,27 @@ export function Dashboard() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      <div className="card-surface overflow-x-auto p-5">
+        <h3 className="font-display text-base font-semibold">Consolidação de Volumes Recebidos</h3>
+        <p className="text-xs text-muted-foreground">Por divisão e tipo de recebimento · dia operacional (T1 + T2 + T3)</p>
+        <table className="mt-3 w-full min-w-[480px] text-sm">
+          <thead className="bg-muted/60 text-xs text-muted-foreground">
+            <tr><th className="px-3 py-2 text-left">Divisão</th><th className="px-3 py-2 text-left">Tipo de recebimento</th><th className="px-3 py-2 text-right">Volumes Recebidos</th></tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {consol.int.map(([k, v]) => (
+              <tr key={k}><td className="px-3 py-1.5">Interno</td><td className="px-3 py-1.5">{k}</td><td className="px-3 py-1.5 text-right tabular-nums">{v.toLocaleString("pt-BR")}</td></tr>
+            ))}
+            <tr className="bg-muted/30 font-semibold"><td className="px-3 py-1.5">Total Interno</td><td className="px-3 py-1.5">Tissue + Personal</td><td className="px-3 py-1.5 text-right tabular-nums">{consol.ti.toLocaleString("pt-BR")}</td></tr>
+            {consol.ext.map(([k, v]) => (
+              <tr key={k}><td className="px-3 py-1.5">Externo</td><td className="px-3 py-1.5">{k}</td><td className="px-3 py-1.5 text-right tabular-nums">{v.toLocaleString("pt-BR")}</td></tr>
+            ))}
+            <tr className="bg-muted/30 font-semibold"><td className="px-3 py-1.5">Total Externo</td><td className="px-3 py-1.5">Importação + Transferências + Devolução + Retrabalho</td><td className="px-3 py-1.5 text-right tabular-nums">{consol.te.toLocaleString("pt-BR")}</td></tr>
+            <tr className="bg-primary/10 font-bold"><td className="px-3 py-2">Total Geral</td><td className="px-3 py-2">Interno + Externo</td><td className="px-3 py-2 text-right tabular-nums">{(consol.ti + consol.te).toLocaleString("pt-BR")}</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <ResourceHoursPanel date={closureDate} shiftId={closureShift} />
