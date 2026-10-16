@@ -310,10 +310,10 @@ function RelatorioMensalPage() {
   const [query, setQuery] = useState("");
 
   const prefix = `${ano}-${mes}`;
-  const doMes = useMemo(() => records.filter((r) => r.date.startsWith(prefix)), [records, prefix]);
+  const doMes = useMemo(() => records.filter((r) => r.opDate.startsWith(prefix)), [records, prefix]);
 
   const anos = useMemo(() => {
-    const set = new Set(records.map((r) => r.date.slice(0, 4)));
+    const set = new Set(records.map((r) => r.opDate.slice(0, 4)));
     set.add(String(now.getFullYear()));
     return [...set].sort().reverse();
   }, [records, now]);
@@ -341,9 +341,9 @@ function RelatorioMensalPage() {
   }, [doMes, fDivision, fShift, fKey, query]);
 
   const porDia = useMemo(() => {
-    const dias = [...new Set(doMes.map((r) => r.date))].sort();
+    const dias = [...new Set(doMes.map((r) => r.opDate))].sort();
     return dias.map((d) => {
-      const rs = doMes.filter((r) => r.date === d);
+      const rs = doMes.filter((r) => r.opDate === d);
       return {
         dia: formatDateBR(d).slice(0, 5),
         Interno: rs.filter((r) => r.division === "INTERNO").length,
@@ -357,7 +357,7 @@ function RelatorioMensalPage() {
   const porMes = useMemo(() => {
     return MESES_CURTOS.map((label, i) => {
       const p = `${ano}-${String(i + 1).padStart(2, "0")}`;
-      const rs = records.filter((r) => r.date.startsWith(p));
+      const rs = records.filter((r) => r.opDate.startsWith(p));
       return {
         mes: label,
         Interno: rs.filter((r) => r.division === "INTERNO").length,

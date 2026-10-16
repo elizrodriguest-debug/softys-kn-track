@@ -55,6 +55,7 @@ function fromRow(r: Row): DischargeRecord {
     date: r.date,
     time: r.time,
     shiftId: r.shift_id,
+    opDate: operationalDate(r.date, r.time, r.shift_id),
     dockNumber: r.dock_number ?? undefined,
     carrierName: r.carrier_name ?? undefined,
     licensePlate: r.license_plate ?? undefined,

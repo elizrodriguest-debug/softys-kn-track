@@ -80,19 +80,19 @@ export function Dashboard() {
     let base = records.filter((r) => r.division === division);
     let dias = 1;
     let ref = today;
-    if (dateFilter === "HOJE") base = base.filter((r) => r.date === today);
+    if (dateFilter === "HOJE") base = base.filter((r) => r.opDate === today);
     else if (dateFilter === "ONTEM") {
       ref = isoToday(1);
-      base = base.filter((r) => r.date === ref);
+      base = base.filter((r) => r.opDate === ref);
     } else if (dateFilter === "7D") {
       const min = isoToday(6);
-      base = base.filter((r) => r.date >= min && r.date <= today);
+      base = base.filter((r) => r.opDate >= min && r.opDate <= today);
       dias = 7;
     } else if (dateFilter === "DIA") {
       ref = specificDate;
-      base = base.filter((r) => r.date === specificDate);
+      base = base.filter((r) => r.opDate === specificDate);
     } else {
-      dias = new Set(base.map((r) => r.date)).size || 1;
+      dias = new Set(base.map((r) => r.opDate)).size || 1;
     }
     if (shift !== "GERAL") base = base.filter((r) => r.shiftId === shift);
     return { filtered: base, days: dias, refDate: ref };
@@ -197,7 +197,7 @@ export function Dashboard() {
         />
         <KpiCard
           index={1}
-          title="Volumes / Pallets Recebidos"
+          title="Volumes Recebidos"
           value={kpis.volumes.toLocaleString("pt-BR")}
           hint={`${filtered.length} descargas no filtro`}
         />

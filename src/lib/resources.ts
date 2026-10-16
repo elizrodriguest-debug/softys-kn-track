@@ -16,10 +16,10 @@ export interface ResourceHour {
   updatedAt: string;
 }
 
-/** Horas de cada turno (T1 06:00–14:20, T2 14:20–22:35, T3 22:35–06:00). */
+/** Horas de cada turno (T1 06:00–14:00, T2 14:00–22:00, T3 22:00–06:00; briefing 15 min). */
 export const SHIFT_HOURS: Record<ShiftId, string[]> = {
-  T1: ["06", "07", "08", "09", "10", "11", "12", "13", "14"],
-  T2: ["14", "15", "16", "17", "18", "19", "20", "21", "22"],
+  T1: ["06", "07", "08", "09", "10", "11", "12", "13"],
+  T2: ["14", "15", "16", "17", "18", "19", "20", "21"],
   T3: ["22", "23", "00", "01", "02", "03", "04", "05"],
 }; 
 
@@ -31,7 +31,7 @@ export const rhKey = (date: string, shift: string, hour: string, div: string) =>
 export function volumeByHour(records: DischargeRecord[]): Map<string, number> {
   const m = new Map<string, number>();
   for (const r of records) {
-    const k = rhKey(r.date, r.shiftId, r.time.slice(0, 2), r.division);
+    const k = rhKey(r.opDate, r.shiftId, r.time.slice(0, 2), r.division);
     m.set(k, (m.get(k) ?? 0) + recordVolumes(r));
   }
   return m;
