@@ -149,7 +149,7 @@ interface StoreCtx {
   settings: Settings;
   session: Session;
   saveRecord: (
-    r: Omit<DischargeRecord, "id" | "createdAt"> & { id?: string; clientRequestId?: string },
+    r: Omit<DischargeRecord, "id" | "createdAt" | "opDate"> & { id?: string; clientRequestId?: string },
   ) => Promise<void>;
   deleteRecord: (id: string) => Promise<void>;
   setRecordStatus: (id: string, status: RecordStatus) => Promise<void>;
