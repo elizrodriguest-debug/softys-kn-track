@@ -27,3 +27,22 @@ describe("produtividade", () => {
     expect(r.adherence).toBe(0.5);
   });
 });
+
+import { operationalDate, shiftFromTime } from "./types";
+describe("dia operacional", () => {
+  it("T3 após meia-noite pertence ao dia anterior", () => {
+    expect(operationalDate("2026-10-02", "02:30", "T3")).toBe("2026-10-01");
+  });
+  it("T3 antes da meia-noite fica no mesmo dia", () => {
+    expect(operationalDate("2026-10-01", "23:00", "T3")).toBe("2026-10-01");
+  });
+  it("T3 do último dia do mês não vai para o mês seguinte", () => {
+    expect(operationalDate("2026-11-01", "04:00", "T3")).toBe("2026-10-31");
+  });
+  it("turnos 06/14/22", () => {
+    expect(shiftFromTime("06:00")).toBe("T1");
+    expect(shiftFromTime("14:00")).toBe("T2");
+    expect(shiftFromTime("22:00")).toBe("T3");
+    expect(shiftFromTime("05:59")).toBe("T3");
+  });
+});

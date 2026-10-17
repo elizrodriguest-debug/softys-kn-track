@@ -42,6 +42,7 @@ import {
   FACTORY_COLORS,
   SHIFTS,
   formatDateBR,
+  recordVolumes,
   type DischargeRecord,
   type DivisionType,
   type ShiftId,
